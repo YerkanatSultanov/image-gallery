@@ -10,7 +10,7 @@ type DataBase struct {
 }
 
 func NewDataBase() (*DataBase, error) {
-	db, err := sql.Open("postgres", "postgresql://postgres:'postgres@localhost:5432/authDatabase?sslmode=disable")
+	db, err := sql.Open("postgres", "postgresql://postgres:postgres@localhost:5432/authDatabase?sslmode=disable")
 	if err != nil {
 		return nil, err
 	}
@@ -19,10 +19,7 @@ func NewDataBase() (*DataBase, error) {
 }
 
 func (d *DataBase) Close() {
-	err := d.db.Close()
-	if err != nil {
-		return
-	}
+	d.db.Close()
 }
 
 func (d *DataBase) GetDB() *sql.DB {
