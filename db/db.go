@@ -19,7 +19,10 @@ func NewDataBase() (*DataBase, error) {
 }
 
 func (d *DataBase) Close() {
-	d.db.Close()
+	err := d.db.Close()
+	if err != nil {
+		return
+	}
 }
 
 func (d *DataBase) GetDB() *sql.DB {

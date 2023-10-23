@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 	"github.com/golang-jwt/jwt/v5"
-	"image-gallery/util"
+	"image-gallery/pkg/util"
 	"strconv"
 	"time"
 )

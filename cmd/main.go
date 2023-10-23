@@ -2,8 +2,8 @@ package main
 
 import (
 	"image-gallery/db"
+	"image-gallery/internal/router"
 	"image-gallery/internal/user"
-	"image-gallery/router"
 	"log"
 )
 
