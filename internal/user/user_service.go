@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"github.com/golang-jwt/jwt/v5"
+	"image-gallery/pkg/cache"
 	"image-gallery/pkg/util"
 	"strconv"
 	"time"
@@ -14,13 +15,15 @@ const (
 
 type service struct {
 	Repository
-	timeout time.Duration
+	timeout   time.Duration
+	userCache cache.User
 }
 
-func NewService(repository Repository) Service {
+func NewService(repository Repository, userCache cache.User) Service {
 	return &service{
 		repository,
 		time.Duration(2) * time.Second,
+		userCache,
 	}
 }
 
