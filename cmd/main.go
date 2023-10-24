@@ -19,7 +19,7 @@ func main() {
 		return
 	}
 
-	userCache := cache.NewUserCache(redisCli)
+	userCache := user.NewUserCache(redisCli)
 
 	userRep := user.NewRepository(dbConn.GetDB())
 	userService := user.NewService(userRep, userCache)
