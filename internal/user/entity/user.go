@@ -1,6 +1,4 @@
-package user
-
-import "context"
+package entity
 
 type User struct {
 	Id       int64  `json:"id" db:"id"`
@@ -27,17 +25,8 @@ type LogInReq struct {
 }
 
 type LogInRes struct {
-	accessToken string
-	Id          string `json:"id" db:"id"`
-	Username    string `json:"username" db:"username"`
-}
-
-type Repository interface {
-	CreateUser(ctx context.Context, user *User) (*User, error)
-	GetUserByEmail(ctx context.Context, email string) (*User, error)
-}
-
-type Service interface {
-	CreateUser(ctx context.Context, req *CreateUserReq) (*CreateUserRes, error)
-	LogIn(c context.Context, req *LogInReq) (*LogInRes, error)
+	Id           string `json:"id" db:"id"`
+	Username     string `json:"username" db:"username"`
+	AccessToken  string
+	RefreshToken string
 }

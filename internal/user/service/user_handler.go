@@ -1,7 +1,8 @@
-package user
+package service
 
 import (
 	"github.com/gin-gonic/gin"
+	"image-gallery/internal/user/entity"
 	"net/http"
 )
 
@@ -16,7 +17,7 @@ func NewHandler(s Service) *Handler {
 }
 
 func (h *Handler) CreateUser(c *gin.Context) {
-	var u CreateUserReq
+	var u entity.CreateUserReq
 	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -32,7 +33,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 }
 
 func (h *Handler) LogIn(c *gin.Context) {
-	var user LogInReq
+	var user entity.LogInReq
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -44,11 +45,14 @@ func (h *Handler) LogIn(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("jwt", u.accessToken, 3600, "/", "localhost", false, true)
+	c.SetCookie("access_token", u.AccessToken, 3600, "/", "localhost", false, true)
+	c.SetCookie("refresh_token", u.RefreshToken, 3600, "/", "localhost", false, true)
 
-	res := &LogInRes{
-		Id:       u.Id,
-		Username: u.Username,
+	res := &entity.LogInRes{
+		AccessToken:  u.AccessToken,
+		RefreshToken: u.RefreshToken,
+		Id:           u.Id,
+		Username:     u.Username,
 	}
 
 	c.JSON(http.StatusOK, res)

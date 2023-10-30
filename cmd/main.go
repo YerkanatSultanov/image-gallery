@@ -1,9 +1,9 @@
 package main
 
 import (
-	"image-gallery/db"
-	"image-gallery/internal/router"
-	"image-gallery/internal/user"
+	"image-gallery/internal/user/db"
+	"image-gallery/internal/user/repo"
+	"image-gallery/internal/user/service"
 	"log"
 )
 
@@ -13,12 +13,12 @@ func main() {
 		log.Fatalf("could not initialize database connection %s", err)
 	}
 
-	userRep := user.NewRepository(dbConn.GetDB())
-	userService := user.NewService(userRep)
-	userHandler := user.NewHandler(userService)
+	userRep := repo.NewRepository(dbConn.GetDB())
+	userService := service.NewService(userRep)
+	userHandler := service.NewHandler(userService)
 
-	router.InitRouters(userHandler)
-	err = router.Start("0.0.0.0:8080")
+	service.InitRouters(userHandler)
+	err = service.Start("0.0.0.0:8080")
 	if err != nil {
 		return
 	}
