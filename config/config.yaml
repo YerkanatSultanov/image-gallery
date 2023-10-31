@@ -1,0 +1,12 @@
+server:
+  port: 8080
+  host: localhost
+db:
+  driver: postgres
+  host: localhost
+  port: 5432
+  name: authDatabase
+  user: postgres
+  password: postgres
+  db_url: "postgresql://postgres:postgres@localhost:5432/authDatabase?sslmode=disable"
+
