@@ -32,33 +32,40 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) LogIn(c *gin.Context) {
-	var user entity.LogInReq
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+func (h *Handler) GetUser(c *gin.Context) {
+	email := c.Param("email")
 
-	u, err := h.Service.LogIn(c.Request.Context(), &user)
+	u, err := h.Service.GetUser(c, email)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.SetCookie("access_token", u.AccessToken, 3600, "/", "localhost", false, true)
-	c.SetCookie("refresh_token", u.RefreshToken, 3600, "/", "localhost", false, true)
-
-	res := &entity.LogInRes{
-		AccessToken:  u.AccessToken,
-		RefreshToken: u.RefreshToken,
-		Id:           u.Id,
-		Username:     u.Username,
+	res := &entity.User{
+		Id:       u.Id,
+		Username: u.Username,
+		Email:    u.Email,
+		Password: u.Password,
 	}
-
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) LogOut(c *gin.Context) {
-	c.SetCookie("jwt", "", -1, "", "", false, true)
-	c.JSON(http.StatusOK, gin.H{"message": "logout successful"})
+func (h *Handler) GetAllUsers(c *gin.Context) {
+	users, err := h.Service.GetAllUsers(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	userResponses := make([]entity.UserResponse, len(users))
+	for i, user := range users {
+		userResponses[i] = entity.UserResponse{
+			Id:       user.Id,
+			Username: user.Username,
+			Email:    user.Email,
+		}
+	}
+
+	c.JSON(http.StatusOK, userResponses)
 }

@@ -7,6 +7,12 @@ type User struct {
 	Password string `json:"password" db:"email"`
 }
 
+type UserResponse struct {
+	Id       int64  `json:"id" db:"id"`
+	Username string `json:"username" db:"username"`
+	Email    string `json:"email" db:"email"`
+}
+
 type CreateUserReq struct {
 	Username string `json:"username" db:"username"`
 	Email    string `json:"email" db:"email"`

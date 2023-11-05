@@ -3,7 +3,7 @@ package repo
 import (
 	"context"
 	"database/sql"
-	"image-gallery/internal/user/entity"
+	"image-gallery/internal/auth/entity"
 )
 
 type DBTX interface {
@@ -18,10 +18,8 @@ type repository struct {
 }
 
 type Repository interface {
-	CreateUser(ctx context.Context, user *entity.User) (*entity.User, error)
-	GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
-	GetUserById(ctx context.Context, id int) (*entity.User, error)
-	GetAllUsers(ctx context.Context) ([]*entity.User, error)
+	CreateUserToken(ctx context.Context, userToken entity.UserToken) error
+	UpdateUserToken(ctx context.Context, userToken entity.UserToken) error
 }
 
 func NewRepository(db DBTX) Repository {

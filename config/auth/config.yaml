@@ -1,0 +1,17 @@
+Auth:
+  secretKey: secret_key
+Server:
+  port: 8081
+  host: localhost
+Database:
+  driver: postgres
+  host: localhost
+  port: 5432
+  name: authDatabase
+  user: postgres
+  password: postgres
+  sslMode: disable
+Transport:
+  User:
+    host: http://localhost:8080
+    Timeout: 5s

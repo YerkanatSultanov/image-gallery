@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"github.com/golang-jwt/jwt/v5"
+	"fmt"
 	"image-gallery/internal/user/entity"
 	"image-gallery/internal/user/repo"
 	"image-gallery/pkg/util"
@@ -21,7 +21,8 @@ type service struct {
 
 type Service interface {
 	CreateUser(ctx context.Context, req *entity.CreateUserReq) (*entity.CreateUserRes, error)
-	LogIn(c context.Context, req *entity.LogInReq) (*entity.LogInRes, error)
+	GetUser(ctx context.Context, email string) (*entity.User, error)
+	GetAllUsers(c context.Context) ([]*entity.UserResponse, error)
 }
 
 func NewService(repository repo.Repository) Service {
@@ -59,46 +60,42 @@ func (s *service) CreateUser(c context.Context, req *entity.CreateUserReq) (*ent
 	return res, nil
 }
 
-func (s *service) LogIn(c context.Context, req *entity.LogInReq) (*entity.LogInRes, error) {
+func (s *service) GetUser(c context.Context, email string) (*entity.User, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 
-	u, err := s.Repository.GetUserByEmail(ctx, req.Email)
+	u, err := s.Repository.GetUserByEmail(ctx, email)
+
 	if err != nil {
-		return &entity.LogInRes{}, err
+		return &entity.User{}, err
 	}
 
-	err = util.CheckPassword(req.Password, u.Password)
-	if err != nil {
-		return &entity.LogInRes{}, err
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, entity.MyJWTClaims{
-		Id:       strconv.Itoa(int(u.Id)),
+	res := &entity.User{
+		Id:       u.Id,
 		Username: u.Username,
-		RegisteredClaims: &jwt.RegisteredClaims{
-			Issuer:    strconv.Itoa(int(u.Id)),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-		},
-	})
+		Email:    u.Email,
+		Password: u.Password,
+	}
 
-	tokenString, err := token.SignedString([]byte(secretKey))
+	return res, nil
+}
+
+func (s *service) GetAllUsers(c context.Context) ([]*entity.UserResponse, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	users, err := s.Repository.GetAllUsers(ctx)
 	if err != nil {
-		return &entity.LogInRes{}, err
+		return nil, fmt.Errorf("error in service GetAllUsers method %s", err)
+	}
+	userResponses := make([]*entity.UserResponse, len(users))
+	for i, user := range users {
+		userResponses[i] = &entity.UserResponse{
+			Id:       user.Id,
+			Username: user.Username,
+			Email:    user.Email,
+		}
 	}
 
-	refreshTokenClaims := jwt.MapClaims{
-		"user_id": u.Id,
-		"exp":     time.Now().Add(time.Second * 1800),
-	}
-
-	refreshToken := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), refreshTokenClaims)
-
-	refreshTokenString, err := refreshToken.SignedString([]byte(secretKey))
-	if err != nil {
-		return &entity.LogInRes{}, err
-	}
-
-	return &entity.LogInRes{AccessToken: tokenString, RefreshToken: refreshTokenString, Id: strconv.Itoa(int(u.Id)), Username: u.Username}, nil
-
+	return userResponses, nil
 }
