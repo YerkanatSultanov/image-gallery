@@ -13,10 +13,10 @@ import (
 
 type UserTransport struct {
 	config config.UserTransport
-	logger *zap.Logger
+	logger *zap.SugaredLogger
 }
 
-func NewTransport(config config.UserTransport, logger *zap.Logger) *UserTransport {
+func NewTransport(config config.UserTransport, logger *zap.SugaredLogger) *UserTransport {
 	return &UserTransport{
 		config: config,
 		logger: logger,

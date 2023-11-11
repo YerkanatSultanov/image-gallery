@@ -20,7 +20,7 @@ type service struct {
 	repository repo.Repository
 	timeout    time.Duration
 	transport  *transport.UserTransport
-	logger     *zap.Logger
+	logger     *zap.SugaredLogger
 }
 
 type Config config.Auth
@@ -29,7 +29,7 @@ type Service interface {
 	LogIn(ctx context.Context, req *entity.LogInReq) (*entity.UserTokenResponse, error)
 }
 
-func NewService(repository repo.Repository, userTransport *transport.UserTransport, logger *zap.Logger) Service {
+func NewService(repository repo.Repository, userTransport *transport.UserTransport, logger *zap.SugaredLogger) Service {
 	return &service{
 		repository,
 		time.Duration(2) * time.Second,
@@ -87,6 +87,19 @@ func (s *service) LogIn(c context.Context, req *entity.LogInReq) (*entity.UserTo
 	if err != nil {
 		s.logger.Info("incorrect secret key refresh token")
 		return &entity.UserTokenResponse{}, err
+	}
+
+	userToken := entity.UserToken{
+		UserId:       u.Id,
+		Token:        tokenString,
+		RefreshToken: refreshTokenString,
+	}
+
+	err = s.repository.CreateUserToken(ctx, userToken)
+
+	if err != nil {
+		s.logger.Info("Can not save in database....")
+		return nil, nil
 	}
 
 	return &entity.UserTokenResponse{UserId: u.Id, Token: tokenString, RefreshToken: refreshTokenString}, nil

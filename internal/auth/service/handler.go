@@ -3,19 +3,16 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"image-gallery/internal/auth/entity"
-	"image-gallery/internal/auth/repo"
 	"net/http"
 )
 
 type Handler struct {
 	Service
-	repo.Repository
 }
 
-func NewHandler(s Service, repository repo.Repository) *Handler {
+func NewHandler(s Service) *Handler {
 	return &Handler{
-		Service:    s,
-		Repository: repository,
+		Service: s,
 	}
 }
 
@@ -40,7 +37,7 @@ func (h *Handler) LogIn(c *gin.Context) {
 		RefreshToken: u.RefreshToken,
 	}
 
-	err = h.Repository.CreateUserToken(c, userToken)
+	//err = h.Repository.CreateUserToken(c, userToken)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
