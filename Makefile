@@ -7,3 +7,12 @@ createdb:
 	docker exec -it postgres16 createdb --username=postgres --owner=postgres authDatabase
 
 .PHONY: postgresinit postgres createdb
+
+protoc:
+	protoc --go_out=. --go-grpc_out=. --go_opt=paths=source_relative ./pkg/protobuf/userservice/gw/user.proto
+userService:
+	go run cmd//user/main.go
+authService:
+	go run cmd//auth/main.go
+
+

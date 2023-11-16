@@ -1,8 +1,9 @@
 package config
 
 type Config struct {
-	Server   Server   `yaml:"Server"`
-	Database Database `yaml:"Database"`
+	Server     Server     `yaml:"Server"`
+	Database   Database   `yaml:"Database"`
+	GrpcServer GrpcServer `yaml:"GrpcServer"`
 }
 
 type Server struct {
@@ -18,4 +19,8 @@ type Database struct {
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
 	SslMode  string `yaml:"sslMode"`
+}
+
+type GrpcServer struct {
+	Port string `yaml:"Port"`
 }

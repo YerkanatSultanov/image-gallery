@@ -24,7 +24,7 @@ func (h *Handler) LogIn(c *gin.Context) {
 		return
 	}
 
-	u, err := h.Service.LogIn(c.Request.Context(), &user)
+	u, err := h.Service.LogIn(&user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -33,12 +33,10 @@ func (h *Handler) LogIn(c *gin.Context) {
 	userToken := entity.UserToken{
 		Id:           u.Id,
 		UserId:       u.UserId,
+		Username:     u.Username,
 		Token:        u.Token,
 		RefreshToken: u.RefreshToken,
 	}
-
-	//err = h.Repository.CreateUserToken(c, userToken)
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -47,9 +45,29 @@ func (h *Handler) LogIn(c *gin.Context) {
 	res := &entity.UserTokenResponse{
 		Id:           userToken.Id,
 		UserId:       userToken.UserId,
+		Username:     userToken.Username,
 		Token:        userToken.Token,
 		RefreshToken: userToken.RefreshToken,
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (h *Handler) RenewToken(c *gin.Context) {
+	userId := c.Param("id")
+
+	userTokenResponse, err := h.Service.RenewToken(userId)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"userId":       userTokenResponse.UserId,
+		"username":     userTokenResponse.Username,
+		"token":        userTokenResponse.Token,
+		"refreshToken": userTokenResponse.RefreshToken,
+	})
+
 }

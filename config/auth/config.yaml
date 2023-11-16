@@ -15,3 +15,5 @@ Transport:
   User:
     host: http://localhost:8080
     Timeout: 5s
+  UserGrpc:
+    Host: localhost:9090

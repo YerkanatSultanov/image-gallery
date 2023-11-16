@@ -20,36 +20,38 @@ type service struct {
 	repository repo.Repository
 	timeout    time.Duration
 	transport  *transport.UserTransport
+	userGrpc   *transport.UserGrpcTransport
 	logger     *zap.SugaredLogger
 }
 
 type Config config.Auth
 
 type Service interface {
-	LogIn(ctx context.Context, req *entity.LogInReq) (*entity.UserTokenResponse, error)
+	LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
+	RenewToken(userID string) (*entity.UserTokenResponse, error)
 }
 
-func NewService(repository repo.Repository, userTransport *transport.UserTransport, logger *zap.SugaredLogger) Service {
+func NewService(repository repo.Repository, userTransport *transport.UserTransport, userGrpc *transport.UserGrpcTransport, logger *zap.SugaredLogger) Service {
 	return &service{
 		repository,
 		time.Duration(2) * time.Second,
 		userTransport,
+		userGrpc,
 		logger,
 	}
 }
 
-func (s *service) LogIn(c context.Context, req *entity.LogInReq) (*entity.UserTokenResponse, error) {
+func (s *service) LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error) {
 
-	ctx, cancel := context.WithTimeout(c, s.timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
 	email := req.Email
 
-	u, err := s.transport.GetUser(ctx, email)
+	u, err := s.userGrpc.GetUserByEmail(ctx, email)
 
 	if err != nil {
-		s.logger.Info("empty user")
-		log.Fatalf("fail in GetUser %s", err)
+		log.Fatalf("fail in GetUserByEmail %s", err)
 		return &entity.UserTokenResponse{}, nil
 	}
 
@@ -62,11 +64,10 @@ func (s *service) LogIn(c context.Context, req *entity.LogInReq) (*entity.UserTo
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, entity.MyJWTClaims{
-		Id:       strconv.Itoa((u.Id)),
-		Username: u.Username,
+		Id: strconv.Itoa(int((u.Id))),
 		RegisteredClaims: &jwt.RegisteredClaims{
-			Issuer:    strconv.Itoa((u.Id)),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			Issuer:    strconv.Itoa(int((u.Id))),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
 		},
 	})
 
@@ -78,7 +79,7 @@ func (s *service) LogIn(c context.Context, req *entity.LogInReq) (*entity.UserTo
 
 	refreshTokenClaims := jwt.MapClaims{
 		"user_id": u.Id,
-		"exp":     time.Now().Add(time.Second * 1800),
+		"exp":     time.Now().Add(time.Second * 180),
 	}
 
 	refreshToken := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), refreshTokenClaims)
@@ -90,17 +91,78 @@ func (s *service) LogIn(c context.Context, req *entity.LogInReq) (*entity.UserTo
 	}
 
 	userToken := entity.UserToken{
-		UserId:       u.Id,
+		UserId:       int(u.Id),
+		Username:     u.Username,
 		Token:        tokenString,
 		RefreshToken: refreshTokenString,
 	}
 
-	err = s.repository.CreateUserToken(ctx, userToken)
-
-	if err != nil {
-		s.logger.Info("Can not save in database....")
-		return nil, nil
+	if err := s.repository.CreateUserToken(ctx, userToken); err != nil {
+		s.logger.Errorf("failed to create user token: %s", err)
 	}
 
-	return &entity.UserTokenResponse{UserId: u.Id, Token: tokenString, RefreshToken: refreshTokenString}, nil
+	return &entity.UserTokenResponse{UserId: int(u.Id), Username: u.Username, Token: tokenString, RefreshToken: refreshTokenString}, nil
+}
+
+func (s *service) RenewToken(userID string) (*entity.UserTokenResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
+	id, err := strconv.Atoi(userID)
+	if err != nil {
+		s.logger.Fatalf("can not convert string to int: %s", err)
+	}
+
+	existingUserToken, err := s.repository.GetUserTokenByUserID(id)
+	if err != nil {
+		s.logger.Errorf("failed to get user token: %s", err)
+		return nil, err
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &entity.MyJWTClaims{
+		Id:       strconv.Itoa(id),
+		Username: existingUserToken.Username,
+		RegisteredClaims: &jwt.RegisteredClaims{
+			Issuer:    strconv.Itoa(id),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
+		},
+	})
+
+	tokenString, err := token.SignedString([]byte("secretKey"))
+	if err != nil {
+		s.logger.Error("failed to sign access token:", err)
+		return nil, err
+	}
+
+	refreshTokenClaims := jwt.MapClaims{
+		"user_id": id,
+		"exp":     time.Now().Add(time.Second * 180).Unix(),
+	}
+
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshTokenClaims)
+
+	refreshTokenString, err := refreshToken.SignedString([]byte("secretKey"))
+	if err != nil {
+		s.logger.Error("failed to sign refresh token:", err)
+		return nil, err
+	}
+
+	updatedUserToken := entity.UserToken{
+		UserId:       id,
+		Username:     existingUserToken.Username,
+		Token:        tokenString,
+		RefreshToken: refreshTokenString,
+	}
+
+	if err := s.repository.UpdateUserToken(ctx, updatedUserToken); err != nil {
+		s.logger.Errorf("failed to update user token: %s", err)
+		return nil, err
+	}
+
+	return &entity.UserTokenResponse{
+		UserId:       id,
+		Username:     updatedUserToken.Username,
+		Token:        tokenString,
+		RefreshToken: refreshTokenString,
+	}, nil
 }

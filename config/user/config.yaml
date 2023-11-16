@@ -1,6 +1,8 @@
 Server:
   port: 8080
   host: localhost
+GrpcServer:
+  Port: ":9090"
 Database:
   driver: postgres
   host: localhost

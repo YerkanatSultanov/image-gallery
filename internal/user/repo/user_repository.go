@@ -13,17 +13,18 @@ type DBTX interface {
 	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
 }
 
-type repository struct {
+type Repository struct {
 	db DBTX
 }
 
-type Repository interface {
-	CreateUser(ctx context.Context, user *entity.User) (*entity.User, error)
-	GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
-	GetUserById(ctx context.Context, id int) (*entity.User, error)
-	GetAllUsers(ctx context.Context) ([]*entity.User, error)
+type RepositoryInt interface {
+	CreateUser(user *entity.User) (*entity.User, error)
+	GetUserByEmail(email string) (*entity.User, error)
+	GetUserById(d int) (*entity.User, error)
+	GetAllUsers() ([]*entity.User, error)
+	DeleteUserByEmail() error
 }
 
-func NewRepository(db DBTX) Repository {
-	return &repository{db: db}
+func NewRepository(db DBTX) *Repository {
+	return &Repository{db: db}
 }

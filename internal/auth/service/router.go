@@ -9,4 +9,5 @@ func InitRouters(userHandler *Handler, r *gin.Engine) {
 	group := r.Group("/api/v1/auth")
 
 	group.POST("/login", userHandler.LogIn)
+	group.POST("/renew-token/:id", userHandler.RenewToken)
 }

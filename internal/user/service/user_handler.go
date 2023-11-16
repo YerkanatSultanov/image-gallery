@@ -3,14 +3,15 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"image-gallery/internal/user/entity"
+	"image-gallery/internal/user/service/grpc"
 	"net/http"
 )
 
 type Handler struct {
-	Service
+	*grpc.Service
 }
 
-func NewHandler(s Service) *Handler {
+func NewHandler(s *grpc.Service) *Handler {
 	return &Handler{
 		Service: s,
 	}
@@ -23,7 +24,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	res, err := h.Service.CreateUser(c.Request.Context(), &u)
+	res, err := h.Service.CreateUser(&u)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -32,10 +33,14 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func (h *Handler) GetUserByEmail(c *gin.Context) {
+
+}
+
 func (h *Handler) GetUser(c *gin.Context) {
 	email := c.Param("email")
 
-	u, err := h.Service.GetUser(c, email)
+	u, err := h.Service.GetUser(email)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -52,7 +57,7 @@ func (h *Handler) GetUser(c *gin.Context) {
 }
 
 func (h *Handler) GetAllUsers(c *gin.Context) {
-	users, err := h.Service.GetAllUsers(c)
+	users, err := h.Service.GetAllUsers()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

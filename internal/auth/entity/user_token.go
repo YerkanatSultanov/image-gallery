@@ -10,6 +10,7 @@ type UserToken struct {
 	Token        string    `db:"token"`
 	RefreshToken string    `db:"refresh_token"`
 	UserId       int       `db:"user_id"`
+	Username     string    `db:"username"`
 	CreatedAt    time.Time `db:"created_at"`
 	UpdatedAt    time.Time `db:"updated_at"`
 }
@@ -23,6 +24,7 @@ type MyJWTClaims struct {
 type UserTokenResponse struct {
 	Id           int    `db:"id"`
 	UserId       int    `db:"user_id"`
+	Username     string `db:"username"`
 	Token        string `db:"token"`
 	RefreshToken string `db:"refresh_token"`
 }

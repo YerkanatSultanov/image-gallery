@@ -13,6 +13,10 @@ type Auth struct {
 	secretKey string `yaml:"secretKey"`
 }
 
+type UserGrpcTransport struct {
+	Host string `yaml:"host"`
+}
+
 type Server struct {
 	Port int    `yaml:"port"`
 	Host string `yaml:"host"`
@@ -29,7 +33,8 @@ type Database struct {
 }
 
 type Transport struct {
-	User UserTransport `yaml:"user"`
+	User     UserTransport     `yaml:"user"`
+	UserGrpc UserGrpcTransport `yaml:"userGrpcTransport"`
 }
 
 type UserTransport struct {

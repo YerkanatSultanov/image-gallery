@@ -8,6 +8,7 @@ import (
 	"image-gallery/internal/user/db"
 	"image-gallery/internal/user/repo"
 	"image-gallery/internal/user/service"
+	"image-gallery/internal/user/service/grpc"
 )
 
 type Applicator struct {
@@ -32,8 +33,16 @@ func (a *Applicator) Run() {
 	}
 
 	userRep := repo.NewRepository(database.GetDB())
-	userService := service.NewService(userRep)
+	userService := grpc.NewService(userRep, log)
 	userHandler := service.NewHandler(userService)
+
+	grpcServer := grpc.NewServer(cfg.GrpcServer.Port, userService)
+	err = grpcServer.Start()
+	if err != nil {
+		log.Panicf("failed to start grpc-server err: %v", err)
+	}
+
+	defer grpcServer.Close()
 
 	service.InitRouters(userHandler, r)
 

@@ -33,8 +33,9 @@ func (a *Applicator) Run() {
 	}
 
 	userRep := repo.NewRepository(database.GetDB())
+	userGrpcTransport := transport.NewUserGrpcTransport(cfg.Transport.UserGrpc)
 	trans := transport.NewTransport(cfg.Transport.User, log)
-	userService := service.NewService(userRep, trans, log)
+	userService := service.NewService(userRep, trans, userGrpcTransport, log)
 	userHandler := service.NewHandler(userService)
 
 	service.InitRouters(userHandler, r)

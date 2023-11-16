@@ -20,6 +20,7 @@ type repository struct {
 type Repository interface {
 	CreateUserToken(ctx context.Context, userToken entity.UserToken) error
 	UpdateUserToken(ctx context.Context, userToken entity.UserToken) error
+	GetUserTokenByUserID(userId int) (*entity.UserToken, error)
 }
 
 func NewRepository(db DBTX) Repository {
