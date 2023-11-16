@@ -3,14 +3,15 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"image-gallery/internal/user/entity"
+	"image-gallery/internal/user/service/grpc"
 	"net/http"
 )
 
 type Handler struct {
-	Service
+	*grpc.Service
 }
 
-func NewHandler(s Service) *Handler {
+func NewHandler(s *grpc.Service) *Handler {
 	return &Handler{
 		Service: s,
 	}
@@ -23,7 +24,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	res, err := h.Service.CreateUser(c.Request.Context(), &u)
+	res, err := h.Service.CreateUser(&u)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -32,33 +33,44 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) LogIn(c *gin.Context) {
-	var user entity.LogInReq
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+func (h *Handler) GetUserByEmail(c *gin.Context) {
 
-	u, err := h.Service.LogIn(c.Request.Context(), &user)
+}
+
+func (h *Handler) GetUser(c *gin.Context) {
+	email := c.Param("email")
+
+	u, err := h.Service.GetUser(email)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.SetCookie("access_token", u.AccessToken, 3600, "/", "localhost", false, true)
-	c.SetCookie("refresh_token", u.RefreshToken, 3600, "/", "localhost", false, true)
-
-	res := &entity.LogInRes{
-		AccessToken:  u.AccessToken,
-		RefreshToken: u.RefreshToken,
-		Id:           u.Id,
-		Username:     u.Username,
+	res := &entity.User{
+		Id:       u.Id,
+		Username: u.Username,
+		Email:    u.Email,
+		Password: u.Password,
 	}
-
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) LogOut(c *gin.Context) {
-	c.SetCookie("jwt", "", -1, "", "", false, true)
-	c.JSON(http.StatusOK, gin.H{"message": "logout successful"})
+func (h *Handler) GetAllUsers(c *gin.Context) {
+	users, err := h.Service.GetAllUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	userResponses := make([]entity.UserResponse, len(users))
+	for i, user := range users {
+		userResponses[i] = entity.UserResponse{
+			Id:       user.Id,
+			Username: user.Username,
+			Email:    user.Email,
+		}
+	}
+
+	c.JSON(http.StatusOK, userResponses)
 }

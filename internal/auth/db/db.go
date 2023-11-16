@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
-	"image-gallery/internal/user/config"
+	"image-gallery/internal/auth/config"
 )
 
 type DataBase struct {
