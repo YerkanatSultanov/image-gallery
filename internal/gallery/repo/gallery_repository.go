@@ -16,11 +16,6 @@ type Repository struct {
 	db DBTX
 }
 
-//
-//type RepositoryInt interface {
-//	CreatePhoto() error
-//}
-
 func NewRepository(db DBTX) *Repository {
 	return &Repository{db: db}
 }

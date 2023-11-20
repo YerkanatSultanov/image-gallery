@@ -36,3 +36,23 @@ func (h *Handler) CreatePhoto(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Photo created successfully"})
 }
+
+func (h *Handler) GetAllPhotos(c *gin.Context) {
+	photos, err := h.Service.GetAllPhotos()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	photoResponse := make([]*entity.PhotoResponse, len(photos))
+	for i, photo := range photos {
+		photoResponse[i] = &entity.PhotoResponse{
+			Id:          photo.Id,
+			UserId:      photo.UserId,
+			Description: photo.Description,
+			ImageLink:   photo.ImageLink,
+			CreatedAt:   photo.CreatedAt,
+		}
+	}
+
+	c.JSON(http.StatusOK, photoResponse)
+}
