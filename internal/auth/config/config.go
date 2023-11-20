@@ -3,10 +3,11 @@ package config
 import "time"
 
 type Config struct {
-	Auth      Auth
-	Server    Server    `yaml:"Server"`
-	Database  Database  `yaml:"Database"`
-	Transport Transport `yaml:"Transport"`
+	Auth       Auth
+	Server     Server     `yaml:"Server"`
+	Database   Database   `yaml:"Database"`
+	Transport  Transport  `yaml:"Transport"`
+	GrpcServer GrpcServer `yaml:"GrpcServer"`
 }
 
 type Auth struct {
@@ -40,4 +41,8 @@ type Transport struct {
 type UserTransport struct {
 	Host    string        `yaml:"host"`
 	Timeout time.Duration `yaml:"timeout"`
+}
+
+type GrpcServer struct {
+	Port string `yaml:"Port"`
 }

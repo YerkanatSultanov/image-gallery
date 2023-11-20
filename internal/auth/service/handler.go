@@ -3,16 +3,17 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"image-gallery/internal/auth/entity"
+	"image-gallery/internal/auth/service/grpc"
 	"net/http"
 )
 
 type Handler struct {
-	Service
+	*grpc.Service
 }
 
-func NewHandler(s Service) *Handler {
+func NewHandler(s grpc.Service) *Handler {
 	return &Handler{
-		Service: s,
+		Service: &s,
 	}
 }
 
@@ -54,9 +55,9 @@ func (h *Handler) LogIn(c *gin.Context) {
 }
 
 func (h *Handler) RenewToken(c *gin.Context) {
-	userId := c.Param("id")
+	//userId := c.Param("id")
 
-	userTokenResponse, err := h.Service.RenewToken(userId)
+	userTokenResponse, err := h.Service.RenewToken(c)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

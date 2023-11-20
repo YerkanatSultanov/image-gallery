@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package authorizationService;
+
+option go_package = "pkg/protobuf/authorizationservice/gw";
+
+service AuthorizationService {
+  rpc IsUserAuthorized(UserAuthorizationRequest) returns (UserAuthorizationResponse);
+}
+
+message UserAuthorizationRequest {
+  string tokenString = 1;
+}
+
+message UserAuthorizationResponse {
+  bool authorized = 1;
+}

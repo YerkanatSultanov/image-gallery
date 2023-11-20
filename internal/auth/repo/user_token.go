@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"image-gallery/internal/auth/entity"
@@ -29,7 +30,9 @@ func (r *repository) CreateUserToken(ctx context.Context, userToken entity.UserT
 	return nil
 }
 
-func (r *repository) UpdateUserToken(ctx context.Context, userToken entity.UserToken) error {
+func (r *repository) UpdateUserToken(userToken entity.UserToken) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 	q := `UPDATE user_token SET token = $1, refresh_token = $2 WHERE user_id = $3;
 `
 	query, args, err := sqlx.In(
@@ -65,4 +68,20 @@ func (r *repository) GetUserTokenByUserID(userId int) (*entity.UserToken, error)
 	}
 
 	return &u, nil
+}
+func (r *repository) IsTokenPresentInDatabase(tokenString string) (bool, error) {
+	query := "SELECT COUNT(*) FROM user_token WHERE token = $1"
+	var count int
+
+	row := r.db.QueryRowContext(context.Background(), query, tokenString)
+
+	err := row.Scan(&count)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check token in the database: %w", err)
+	}
+
+	return count > 0, nil
 }

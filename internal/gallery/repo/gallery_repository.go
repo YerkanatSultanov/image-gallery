@@ -16,12 +16,9 @@ type Repository struct {
 	db DBTX
 }
 
+//
 //type RepositoryInt interface {
-//	CreateUser(user *entity.User) (*entity.User, error)
-//	GetUserByEmail(email string) (*entity.User, error)
-//	GetUserById(d int) (*entity.User, error)
-//	GetAllUsers() ([]*entity.User, error)
-//	DeleteUserByEmail() error
+//	CreatePhoto() error
 //}
 
 func NewRepository(db DBTX) *Repository {
