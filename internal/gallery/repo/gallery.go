@@ -53,6 +53,42 @@ func (r *Repository) GetAllPhotos() ([]*entity.Photo, error) {
 	}
 
 	if err := rows.Err(); err != nil {
+		log.Fatalf("error in rows: %s", err)
+		return nil, err
+	}
+
+	return photos, nil
+}
+
+func (r *Repository) GetGalleryById(id int) ([]*entity.PhotoResponse, error) {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	query := "Select id, user_id, description, image_link, created_at from image where user_id = $1"
+	rows, err := r.db.QueryContext(c, query, id)
+	if err != nil {
+		log.Fatalf("Error in database: %s", err)
+		return nil, err
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+
+		}
+	}(rows)
+
+	var photos []*entity.PhotoResponse
+
+	for rows.Next() {
+		var photo entity.PhotoResponse
+		if err := rows.Scan(&photo.Id, &photo.UserId, &photo.Description, &photo.ImageLink, &photo.CreatedAt); err != nil {
+			return nil, err
+		}
+		photos = append(photos, &photo)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Fatalf("error in rows: %s", err)
 		return nil, err
 	}
 

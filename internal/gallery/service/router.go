@@ -9,5 +9,6 @@ func InitRouters(userHandler *Handler, r *gin.Engine) {
 	group := r.Group("/api/v1/gallery")
 
 	group.POST("/create", userHandler.CreatePhoto)
-	group.POST("/getAllPhotos", userHandler.GetAllPhotos)
+	group.GET("/getAllPhotos", userHandler.GetAllPhotos)
+	group.GET("/getById/:id", userHandler.GetGalleryById)
 }

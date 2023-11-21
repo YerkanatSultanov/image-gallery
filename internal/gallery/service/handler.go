@@ -3,7 +3,9 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"image-gallery/internal/gallery/entity"
+	"log"
 	"net/http"
+	"strconv"
 )
 
 type Handler struct {
@@ -55,4 +57,22 @@ func (h *Handler) GetAllPhotos(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, photoResponse)
+}
+func (h *Handler) GetGalleryById(c *gin.Context) {
+	// Extract user ID from the request or authentication token, assuming you have some way to get it
+	userId := c.Param("id")
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		log.Fatalf("Error in parsing string user id: %s", err)
+	}
+
+	// Call the service function
+	photos, err := h.Service.GetGalleryById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Respond with the photos
+	c.JSON(http.StatusOK, photos)
 }

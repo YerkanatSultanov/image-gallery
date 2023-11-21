@@ -23,6 +23,7 @@ type service struct {
 type Service interface {
 	CreatePhoto(ph *entity.ImageRequest, c *gin.Context) error
 	GetAllPhotos() ([]*entity.PhotoResponse, error)
+	GetGalleryById(id int) ([]*entity.PhotoResponse, error)
 }
 
 func NewService(repository repo.Repository, logger *zap.SugaredLogger, authGrpc *transport.AuthGrpcTransport) Service {
@@ -84,6 +85,26 @@ func (s *service) CreatePhoto(ph *entity.ImageRequest, c *gin.Context) error {
 func (s *service) GetAllPhotos() ([]*entity.PhotoResponse, error) {
 	photos, err := s.repository.GetAllPhotos()
 
+	if err != nil {
+		return nil, fmt.Errorf("error in service GetAllPhotos method %s", err)
+	}
+
+	photoResponse := make([]*entity.PhotoResponse, len(photos))
+	for i, photo := range photos {
+		photoResponse[i] = &entity.PhotoResponse{
+			Id:          photo.Id,
+			UserId:      photo.UserId,
+			Description: photo.Description,
+			ImageLink:   photo.ImageLink,
+			CreatedAt:   photo.CreatedAt,
+		}
+	}
+
+	return photoResponse, nil
+}
+
+func (s *service) GetGalleryById(id int) ([]*entity.PhotoResponse, error) {
+	photos, err := s.repository.GetGalleryById(id)
 	if err != nil {
 		return nil, fmt.Errorf("error in service GetAllPhotos method %s", err)
 	}
