@@ -21,7 +21,7 @@ func (r *Repository) CreatePhoto(ph *entity.Photo) error {
 		return fmt.Errorf("query bake failed: %w", err)
 	}
 
-	ph.Id = (lastInsertId)
+	ph.Id = lastInsertId
 	return nil
 }
 
@@ -93,4 +93,39 @@ func (r *Repository) GetGalleryById(id int) ([]*entity.PhotoResponse, error) {
 	}
 
 	return photos, nil
+}
+
+func (r *Repository) AddTagName(t *entity.Tags) (int, error) {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var lastInsertId int
+	query := "insert into tags(tag_name) values($1) returning tag_id"
+
+	err := r.db.QueryRowContext(c, query, &t.TagName).Scan(&lastInsertId)
+
+	if err != nil {
+		return 0, fmt.Errorf("query bake failed: %v", err)
+	}
+
+	t.TagId = lastInsertId
+	return t.TagId, nil
+}
+
+func (r *Repository) AddTagImage(tagId, imageId int) error {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	query := "INSERT INTO tag_images(image_id, tag_id) VALUES ($1, $2)"
+
+	_, err := r.db.ExecContext(c, query, imageId, tagId)
+	if err != nil {
+		return fmt.Errorf("query bake failed: %v", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) BeginTransaction() (*sql.Tx, error) {
+	return r.db.Begin()
 }

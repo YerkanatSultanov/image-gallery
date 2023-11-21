@@ -9,6 +9,7 @@ import (
 	"image-gallery/internal/gallery/repo"
 	"image-gallery/internal/gallery/service/token"
 	"image-gallery/internal/gallery/transport"
+	"log"
 	"strconv"
 	"time"
 )
@@ -24,6 +25,7 @@ type Service interface {
 	CreatePhoto(ph *entity.ImageRequest, c *gin.Context) error
 	GetAllPhotos() ([]*entity.PhotoResponse, error)
 	GetGalleryById(id int) ([]*entity.PhotoResponse, error)
+	AddTag(tagName string, imageId int) error
 }
 
 func NewService(repository repo.Repository, logger *zap.SugaredLogger, authGrpc *transport.AuthGrpcTransport) Service {
@@ -36,7 +38,6 @@ func NewService(repository repo.Repository, logger *zap.SugaredLogger, authGrpc 
 }
 
 func (s *service) CreatePhoto(ph *entity.ImageRequest, c *gin.Context) error {
-
 	tokenString, err := token.ExtractTokenFromHeader(c)
 	if err != nil {
 		s.logger.Error("failed to extract token:", err)
@@ -121,4 +122,38 @@ func (s *service) GetGalleryById(id int) ([]*entity.PhotoResponse, error) {
 	}
 
 	return photoResponse, nil
+}
+func (s *service) AddTag(tagName string, imageId int) error {
+	tx, err := s.repository.BeginTransaction()
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %s", err)
+	}
+	defer func() {
+		if err != nil {
+			err := tx.Rollback()
+			if err != nil {
+				log.Fatalf("Error in RollBack")
+				return
+			}
+		}
+	}()
+
+	t := &entity.Tags{
+		TagName: tagName,
+	}
+	tagID, err := s.repository.AddTagName(t)
+	if err != nil {
+		return fmt.Errorf("error adding tag name: %s", err)
+	}
+
+	err = s.repository.AddTagImage(tagID, imageId)
+	if err != nil {
+		return fmt.Errorf("error adding image with tag: %s", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("error committing transaction: %s", err)
+	}
+
+	return nil
 }

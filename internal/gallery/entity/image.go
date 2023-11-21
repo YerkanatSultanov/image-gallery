@@ -23,3 +23,13 @@ type PhotoResponse struct {
 	ImageLink   string    `db:"image"`
 	CreatedAt   time.Time `db:"created_at"`
 }
+
+type Tags struct {
+	TagId   int    `db:"tag_id"`
+	TagName string `db:"tag_name"`
+}
+
+type TageRequest struct {
+	TagName string `json:"TagName"`
+	ImageId int    `json:"ImageId"`
+}

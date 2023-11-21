@@ -21,16 +21,13 @@ func NewHandler(s Service) *Handler {
 func (h *Handler) CreatePhoto(c *gin.Context) {
 	var photoRequest entity.ImageRequest
 
-	// Bind JSON request body to the ImageRequest struct
 	if err := c.ShouldBindJSON(&photoRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Call the CreatePhoto function from the service
 	err := h.Service.CreatePhoto(&photoRequest, c)
 
-	// Check for errors and respond accordingly
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -59,20 +56,35 @@ func (h *Handler) GetAllPhotos(c *gin.Context) {
 	c.JSON(http.StatusOK, photoResponse)
 }
 func (h *Handler) GetGalleryById(c *gin.Context) {
-	// Extract user ID from the request or authentication token, assuming you have some way to get it
 	userId := c.Param("id")
 	id, err := strconv.Atoi(userId)
 	if err != nil {
 		log.Fatalf("Error in parsing string user id: %s", err)
 	}
 
-	// Call the service function
 	photos, err := h.Service.GetGalleryById(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Respond with the photos
 	c.JSON(http.StatusOK, photos)
+}
+
+func (h *Handler) AddTagName(c *gin.Context) {
+	var addingTag entity.TageRequest
+
+	if err := c.ShouldBindJSON(&addingTag); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.Service.AddTag(addingTag.TagName, addingTag.ImageId)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error in adding tag handler": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "tag added successfully"})
 }
