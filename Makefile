@@ -14,5 +14,6 @@ userService:
 	go run cmd//user/main.go
 authService:
 	go run cmd//auth/main.go
-
+galleryMigrations:
+	migrate -path database/gallery_migrations/ -database "postgresql://postgres:postgres@localhost:5432/galleryService?sslmode=disable" -verbose up
 

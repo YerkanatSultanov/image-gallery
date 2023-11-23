@@ -33,10 +33,6 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) GetUserByEmail(c *gin.Context) {
-
-}
-
 func (h *Handler) GetUser(c *gin.Context) {
 	email := c.Param("email")
 

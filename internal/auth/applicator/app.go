@@ -8,6 +8,7 @@ import (
 	"image-gallery/internal/auth/db"
 	"image-gallery/internal/auth/repo"
 	"image-gallery/internal/auth/service"
+	"image-gallery/internal/auth/service/grpc"
 	"image-gallery/internal/auth/transport"
 )
 
@@ -35,8 +36,14 @@ func (a *Applicator) Run() {
 	userRep := repo.NewRepository(database.GetDB())
 	userGrpcTransport := transport.NewUserGrpcTransport(cfg.Transport.UserGrpc)
 	trans := transport.NewTransport(cfg.Transport.User, log)
-	userService := service.NewService(userRep, trans, userGrpcTransport, log)
-	userHandler := service.NewHandler(userService)
+	userService := grpc.NewService(userRep, trans, userGrpcTransport, log)
+	userHandler := service.NewHandler(*userService)
+
+	grpcServer := grpc.NewServer(cfg.GrpcServer.Port, userService)
+	err = grpcServer.Start()
+	if err != nil {
+		log.Panicf("failed to start grpc-server err: %v", err)
+	}
 
 	service.InitRouters(userHandler, r)
 
