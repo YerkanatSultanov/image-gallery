@@ -3,7 +3,6 @@ package repo
 import (
 	"context"
 	"database/sql"
-	"image-gallery/internal/user/entity"
 )
 
 type DBTX interface {
@@ -17,13 +16,13 @@ type Repository struct {
 	db DBTX
 }
 
-type RepositoryInt interface {
-	CreateUser(user *entity.User) (*entity.User, error)
-	GetUserByEmail(email string) (*entity.User, error)
-	GetUserById(d int) (*entity.User, error)
-	GetAllUsers() ([]*entity.User, error)
-	DeleteUserByEmail() error
-}
+//type RepositoryInt interface {
+//	CreateUser(user *entity.User) (*entity.User, error)
+//	GetUserByEmail(email string) (*entity.User, error)
+//	GetUserById(d int) (*entity.User, error)
+//	GetAllUsers() ([]*entity.User, error)
+//	DeleteUserByEmail() error
+//}
 
 func NewRepository(db DBTX) *Repository {
 	return &Repository{db: db}

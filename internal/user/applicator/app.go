@@ -23,6 +23,8 @@ func NewApplicator(logger *zap.SugaredLogger, cfg config.Config) *Applicator {
 	}
 }
 
+//TODO: ADMIN
+
 func (a *Applicator) Run() {
 	r := gin.Default()
 	cfg := a.config

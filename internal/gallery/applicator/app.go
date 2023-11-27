@@ -35,7 +35,8 @@ func (a *Applicator) Run() {
 
 	repository := repo.NewRepository(database.GetDB())
 	authGrpcTransport := transport.NewAuthGrpcTransport(cfg.Transport.AuthGrpc)
-	galleryService := service.NewService(*repository, log, authGrpcTransport)
+	userGrpcTransport := transport.NewUserGrpcTransport(cfg.Transport.UserGrpc)
+	galleryService := service.NewService(*repository, log, authGrpcTransport, userGrpcTransport)
 	handler := service.NewHandler(galleryService)
 
 	service.InitRouters(handler, r)

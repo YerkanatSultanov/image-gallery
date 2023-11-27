@@ -2,7 +2,7 @@ package entity
 
 import "time"
 
-type Photo struct {
+type Image struct {
 	Id          int       `db:"id"`
 	UserId      int       `db:"userId"`
 	Description string    `db:"name"`

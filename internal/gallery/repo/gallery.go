@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (r *Repository) CreatePhoto(ph *entity.Photo) error {
+func (r *Repository) CreatePhoto(ph *entity.Image) error {
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -25,7 +25,7 @@ func (r *Repository) CreatePhoto(ph *entity.Photo) error {
 	return nil
 }
 
-func (r *Repository) GetAllPhotos() ([]*entity.Photo, error) {
+func (r *Repository) GetAllPhotos() ([]*entity.Image, error) {
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -42,10 +42,10 @@ func (r *Repository) GetAllPhotos() ([]*entity.Photo, error) {
 		}
 	}(rows)
 
-	var photos []*entity.Photo
+	var photos []*entity.Image
 
 	for rows.Next() {
-		var photo entity.Photo
+		var photo entity.Image
 		if err := rows.Scan(&photo.Id, &photo.UserId, &photo.Description, &photo.ImageLink, &photo.CreatedAt); err != nil {
 			return nil, err
 		}
@@ -128,4 +128,18 @@ func (r *Repository) AddTagImage(tagId, imageId int) error {
 
 func (r *Repository) BeginTransaction() (*sql.Tx, error) {
 	return r.db.Begin()
+}
+
+func (r *Repository) DeleteImage(imageId int) error {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	query := "delete from image where id = $1"
+	_, err := r.db.ExecContext(c, query, imageId)
+
+	if err != nil {
+		return fmt.Errorf("query bake failed: %v", err)
+	}
+
+	return nil
 }

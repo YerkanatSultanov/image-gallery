@@ -25,6 +25,11 @@ type AuthGrpcTransport struct {
 	Host string `yaml:"host"`
 }
 
+type UserGrpcTransport struct {
+	Host string `yaml:"host"`
+}
+
 type Transport struct {
 	AuthGrpc AuthGrpcTransport `yaml:"galleryGrpc"`
+	UserGrpc UserGrpcTransport `yaml:"userGrpc"`
 }

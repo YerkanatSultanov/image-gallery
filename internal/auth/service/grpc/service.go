@@ -67,7 +67,7 @@ func (s *Service) LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
 		return &entity.UserTokenResponse{}, err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, entity.MyJWTClaims{
+	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, entity.MyJWTClaims{
 		Id:       strconv.Itoa(int((u.Id))),
 		Username: u.Username,
 		RegisteredClaims: &jwt.RegisteredClaims{
@@ -76,9 +76,9 @@ func (s *Service) LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
 		},
 	})
 
-	tokenString, err := token.SignedString([]byte("secretKey"))
+	tokenString, err := newToken.SignedString([]byte("secretKey"))
 	if err != nil {
-		s.logger.Info("incorrect secret key token")
+		s.logger.Info("incorrect secret key newToken")
 		return &entity.UserTokenResponse{}, err
 	}
 
@@ -91,7 +91,7 @@ func (s *Service) LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
 
 	refreshTokenString, err := refreshToken.SignedString([]byte("secretKey"))
 	if err != nil {
-		s.logger.Info("incorrect secret key refresh token")
+		s.logger.Info("incorrect secret key refresh newToken")
 		return &entity.UserTokenResponse{}, err
 	}
 
@@ -103,7 +103,7 @@ func (s *Service) LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
 	}
 
 	if err := s.repository.CreateUserToken(ctx, userToken); err != nil {
-		s.logger.Errorf("failed to create user token: %s", err)
+		s.logger.Errorf("failed to create user newToken: %s", err)
 	}
 
 	return &entity.UserTokenResponse{UserId: int(u.Id), Username: u.Username, Token: tokenString, RefreshToken: refreshTokenString}, nil
