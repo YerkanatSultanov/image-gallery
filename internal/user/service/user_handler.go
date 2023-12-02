@@ -115,3 +115,19 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "User delete successfully"})
 }
+
+func (h *Handler) CreateUserAdmin(c *gin.Context) {
+	var u entity.CreateUserReq
+	if err := c.ShouldBindJSON(&u); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := h.Service.CreateUserAdmin(&u, c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}

@@ -18,7 +18,7 @@ type ImageRequest struct {
 
 type PhotoResponse struct {
 	Id          int       `db:"id"`
-	UserId      int       `db:"userId"`
+	UserId      int       `db:"user_id"`
 	Description string    `db:"name"`
 	ImageLink   string    `db:"image"`
 	CreatedAt   time.Time `db:"created_at"`
@@ -32,4 +32,18 @@ type Tags struct {
 type TageRequest struct {
 	TagName string `json:"TagName"`
 	ImageId int    `json:"ImageId"`
+}
+
+type Username struct {
+	Username string `json:"username"`
+}
+
+type Likes struct {
+	UserId    int       `db:"user_id"`
+	ImageId   int       `db:"image_id"`
+	CreatedAt time.Time `db:"created_at"`
+}
+
+type LikesRequest struct {
+	ImageId int `json:"image_id"`
 }

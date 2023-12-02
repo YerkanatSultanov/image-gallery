@@ -26,6 +26,8 @@ type Service interface {
 	GetGalleryById(id int, c *gin.Context) ([]*entity.PhotoResponse, error)
 	AddTag(tagName string, imageId int) error
 	DeleteImage(imageId int, c *gin.Context) error
+	Follows(followeeUsername string, c *gin.Context) error
+	Like(c *gin.Context, imageId int) error
 }
 
 func NewService(repository repo.Repository, logger *zap.SugaredLogger, authGrpc *transport.AuthGrpcTransport, userGrpc *transport.UserGrpc) Service {
@@ -39,7 +41,7 @@ func NewService(repository repo.Repository, logger *zap.SugaredLogger, authGrpc 
 }
 
 func (s *service) CreatePhoto(ph *entity.ImageRequest, c *gin.Context) error {
-	tokenString, id, err := token.TokenStringClaims(c)
+	tokenString, id, _, err := token.Claims(c)
 
 	photo := &entity.Image{
 		UserId:      id,
@@ -66,7 +68,7 @@ func (s *service) CreatePhoto(ph *entity.ImageRequest, c *gin.Context) error {
 
 func (s *service) GetAllPhotos(c *gin.Context) ([]*entity.PhotoResponse, error) {
 
-	_, id, err := token.TokenStringClaims(c)
+	_, id, _, err := token.Claims(c)
 	u, err := s.userGrpc.GetUserById(c, id)
 	if u.Role != "admin" {
 		s.logger.Fatalf("You don't have a permissions for getting gallery: %s", err)
@@ -94,7 +96,7 @@ func (s *service) GetAllPhotos(c *gin.Context) ([]*entity.PhotoResponse, error) 
 }
 
 func (s *service) GetGalleryById(targetId int, c *gin.Context) ([]*entity.PhotoResponse, error) {
-	_, id, err := token.TokenStringClaims(c)
+	_, id, _, err := token.Claims(c)
 	u, err := s.userGrpc.GetUserById(c, id)
 	if u.Role != "admin" {
 		s.logger.Fatalf("You don't have a permissions for getting gallery: %s", err)
@@ -156,7 +158,12 @@ func (s *service) AddTag(tagName string, imageId int) error {
 
 func (s *service) DeleteImage(imageId int, c *gin.Context) error {
 
-	_, id, err := token.TokenStringClaims(c)
+	_, id, _, err := token.Claims(c)
+
+	if err != nil {
+		s.logger.Errorf("error in claims of token: %s", err)
+	}
+
 	u, err := s.userGrpc.GetUserById(c, id)
 	if u.Role != "admin" {
 		s.logger.Fatalf("You don't have a permissions for getting gallery: %s", err)
@@ -170,4 +177,57 @@ func (s *service) DeleteImage(imageId int, c *gin.Context) error {
 	}
 
 	return nil
+}
+
+func (s *service) Follows(followeeUsername string, c *gin.Context) error {
+	_, id, _, err := token.Claims(c)
+	if err != nil {
+		s.logger.Errorf("error in claims of token: %s", err)
+	}
+
+	u, err := s.userGrpc.GetUserByUsername(c, followeeUsername)
+	//TODO: Check user for authorization
+
+	if err != nil {
+		s.logger.Errorf("U can not to follow this user: %s", err)
+	}
+
+	err = s.repository.Follow(id, int(u.Id))
+
+	if err != nil {
+		s.logger.Fatalf("error to follow: %s", err)
+	}
+
+	return nil
+}
+
+func (s *service) Like(c *gin.Context, imageId int) error {
+	_, id, _, err := token.Claims(c)
+	if err != nil {
+		s.logger.Errorf("error in claims of token: %s", err)
+	}
+
+	has, err := s.repository.UserHasImage(imageId)
+	if !has {
+		s.logger.Errorf("User does not have images")
+	}
+	if err != nil {
+		s.logger.Fatalf("error in checkin images: %s", err)
+	}
+	ok, err := s.repository.UserLikedPhoto(id, imageId)
+
+	req := &entity.Likes{
+		UserId:  id,
+		ImageId: imageId,
+	}
+
+	if !ok {
+		err := s.repository.LikePhoto(req)
+		if err != nil {
+			s.logger.Fatalf("Can not like the image: %s", err)
+		}
+	}
+
+	return nil
+
 }

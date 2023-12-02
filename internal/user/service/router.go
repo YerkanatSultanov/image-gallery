@@ -13,6 +13,7 @@ func InitRouters(userHandler *Handler, r *gin.Engine) {
 	groupClient.POST("/signup", userHandler.CreateUser)
 	groupAdmin.GET("/:email", middleware.JWTVerify(), userHandler.GetUser)
 
+	groupAdmin.POST("/", userHandler.CreateUserAdmin)
 	groupAdmin.GET("/all", userHandler.GetAllUsers)
 	groupAdmin.POST("/update/:id", userHandler.UpdateUser)
 	groupAdmin.DELETE("/delete/:id", userHandler.DeleteUser)

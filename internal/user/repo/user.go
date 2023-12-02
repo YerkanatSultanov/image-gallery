@@ -14,8 +14,10 @@ func (r *Repository) CreateUser(user *entity.User) (*entity.User, error) {
 	defer cancel()
 
 	var lastInsertId int
+
 	query := "INSERT INTO users(username, password, email, role) VALUES ($1, $2, $3, 'client') returning id"
 	err := r.db.QueryRowContext(c, query, user.Username, user.Password, user.Email).Scan(&lastInsertId)
+
 	if err != nil {
 		return &entity.User{}, err
 	}
@@ -46,6 +48,20 @@ func (r *Repository) GetUserById(id int) (*entity.User, error) {
 	query := "SELECT id, email, username, password, role FROM users WHERE id = $1"
 
 	err := r.db.QueryRowContext(c, query, id).Scan(&u.Id, &u.Email, &u.Username, &u.Password, &u.Role)
+	if err != nil {
+		return &entity.User{}, nil
+	}
+
+	return &u, nil
+}
+
+func (r *Repository) GetUserByUsername(username string) (*entity.User, error) {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	u := entity.User{}
+	query := "SELECT id, email, username, password, role FROM users WHERE username = $1"
+
+	err := r.db.QueryRowContext(c, query, username).Scan(&u.Id, &u.Email, &u.Username, &u.Password, &u.Role)
 	if err != nil {
 		return &entity.User{}, nil
 	}

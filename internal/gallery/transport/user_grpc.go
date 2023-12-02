@@ -43,3 +43,18 @@ func (t *UserGrpc) GetUserById(ctx context.Context, id int) (*pb.User, error) {
 
 	return resp.Result, nil
 }
+
+func (t *UserGrpc) GetUserByUsername(ctx context.Context, username string) (*pb.User, error) {
+	resp, err := t.client.GetUserByUsername(ctx, &pb.GetUserByUsernameRequest{
+		Username: username,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("Can not check Authorizaion: %s", err)
+	}
+	if resp == nil {
+		return nil, fmt.Errorf("not found")
+	}
+
+	return resp.Result, nil
+}

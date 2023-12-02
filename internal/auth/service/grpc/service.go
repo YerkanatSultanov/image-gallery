@@ -27,22 +27,17 @@ type Service struct {
 	transport  *transport.UserTransport
 	userGrpc   *transport.UserGrpcTransport
 	logger     *zap.SugaredLogger
+	config     config.Config
 }
 
-type Config config.Auth
-
-//type ServiceInt interface {
-//	LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
-//	RenewToken(c *gin.Context) (*entity.UserTokenResponse, error)
-//}
-
-func NewService(repository repo.Repository, userTransport *transport.UserTransport, userGrpc *transport.UserGrpcTransport, logger *zap.SugaredLogger) *Service {
+func NewService(repository repo.Repository, userTransport *transport.UserTransport, userGrpc *transport.UserGrpcTransport, logger *zap.SugaredLogger, cfg config.Config) *Service {
 	return &Service{
 		repository: repository,
 		timeout:    time.Duration(2) * time.Second,
 		transport:  userTransport,
 		userGrpc:   userGrpc,
 		logger:     logger,
+		config:     cfg,
 	}
 }
 
@@ -68,15 +63,15 @@ func (s *Service) LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
 	}
 
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, entity.MyJWTClaims{
-		Id:       strconv.Itoa(int((u.Id))),
+		Id:       strconv.Itoa(int(u.Id)),
 		Username: u.Username,
 		RegisteredClaims: &jwt.RegisteredClaims{
-			Issuer:    strconv.Itoa(int((u.Id))),
+			Issuer:    strconv.Itoa(int(u.Id)),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Hour)),
 		},
 	})
 
-	tokenString, err := newToken.SignedString([]byte("secretKey"))
+	tokenString, err := newToken.SignedString([]byte(s.config.Auth.SecretKey))
 	if err != nil {
 		s.logger.Info("incorrect secret key newToken")
 		return &entity.UserTokenResponse{}, err
@@ -89,88 +84,28 @@ func (s *Service) LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
 
 	refreshToken := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), refreshTokenClaims)
 
-	refreshTokenString, err := refreshToken.SignedString([]byte("secretKey"))
+	refreshTokenString, err := refreshToken.SignedString([]byte(s.config.Auth.SecretKey))
 	if err != nil {
 		s.logger.Info("incorrect secret key refresh newToken")
 		return &entity.UserTokenResponse{}, err
 	}
 
-	userToken := entity.UserToken{
-		UserId:       int(u.Id),
-		Username:     u.Username,
+	userToken := &entity.UserToken{
 		Token:        tokenString,
 		RefreshToken: refreshTokenString,
+		UserId:       int(u.Id),
+		Username:     u.Username,
 	}
 
-	if err := s.repository.CreateUserToken(ctx, userToken); err != nil {
+	user, err := s.repository.CreateUserToken(userToken)
+	if err != nil {
 		s.logger.Errorf("failed to create user newToken: %s", err)
+		return nil, err
 	}
 
-	return &entity.UserTokenResponse{UserId: int(u.Id), Username: u.Username, Token: tokenString, RefreshToken: refreshTokenString}, nil
+	return &entity.UserTokenResponse{Id: user.Id, UserId: int(u.Id), Username: u.Username, Token: tokenString, RefreshToken: refreshTokenString}, nil
 }
 
-//	func (s *service) RenewToken(userID string) (*entity.UserTokenResponse, error) {
-//		ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
-//		defer cancel()
-//
-//		id, err := strconv.Atoi(userID)
-//		if err != nil {
-//			s.logger.Fatalf("can not convert string to int: %s", err)
-//		}
-//
-//		existingUserToken, err := s.repository.GetUserTokenByUserID(id)
-//		if err != nil {
-//			s.logger.Errorf("failed to get user token: %s", err)
-//			return nil, err
-//		}
-//
-//		token := jwt.NewWithClaims(jwt.SigningMethodHS256, &entity.MyJWTClaims{
-//			Id:       strconv.Itoa(id),
-//			Username: existingUserToken.Username,
-//			RegisteredClaims: &jwt.RegisteredClaims{
-//				Issuer:    strconv.Itoa(id),
-//				ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
-//			},
-//		})
-//
-//		tokenString, err := token.SignedString([]byte("secretKey"))
-//		if err != nil {
-//			s.logger.Error("failed to sign access token:", err)
-//			return nil, err
-//		}
-//
-//		refreshTokenClaims := jwt.MapClaims{
-//			"user_id": id,
-//			"exp":     time.Now().Add(time.Second * 180).Unix(),
-//		}
-//
-//		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshTokenClaims)
-//
-//		refreshTokenString, err := refreshToken.SignedString([]byte("secretKey"))
-//		if err != nil {
-//			s.logger.Error("failed to sign refresh token:", err)
-//			return nil, err
-//		}
-//
-//		updatedUserToken := entity.UserToken{
-//			UserId:       id,
-//			Username:     existingUserToken.Username,
-//			Token:        tokenString,
-//			RefreshToken: refreshTokenString,
-//		}
-//
-//		if err := s.repository.UpdateUserToken(ctx, updatedUserToken); err != nil {
-//			s.logger.Errorf("failed to update user token: %s", err)
-//			return nil, err
-//		}
-//
-//		return &entity.UserTokenResponse{
-//			UserId:       id,
-//			Username:     updatedUserToken.Username,
-//			Token:        tokenString,
-//			RefreshToken: refreshTokenString,
-//		}, nil
-//	}
 func (s *Service) RenewToken(c *gin.Context) (*entity.UserTokenResponse, error) {
 	tokenString, err := token.ExtractTokenFromHeader(c)
 	if err != nil {
@@ -210,7 +145,7 @@ func (s *Service) RenewToken(c *gin.Context) (*entity.UserTokenResponse, error) 
 		},
 	})
 
-	tokenString, err = token.SignedString([]byte("secretKey"))
+	tokenString, err = token.SignedString([]byte(s.config.Auth.SecretKey))
 	if err != nil {
 		s.logger.Error("failed to sign access token:", err)
 		return nil, err
@@ -223,7 +158,7 @@ func (s *Service) RenewToken(c *gin.Context) (*entity.UserTokenResponse, error) 
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshTokenClaims)
 
-	refreshTokenString, err := refreshToken.SignedString([]byte("secretKey"))
+	refreshTokenString, err := refreshToken.SignedString([]byte(s.config.Auth.SecretKey))
 	if err != nil {
 		s.logger.Error("failed to sign refresh token:", err)
 		return nil, err

@@ -102,3 +102,38 @@ func (h *Handler) DeleteImage(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "image delete successfully"})
 }
+
+func (h *Handler) Follow(c *gin.Context) {
+	var req entity.Username
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.Service.Follows(req.Username, c)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "You successfully follow"})
+}
+
+func (h *Handler) Like(c *gin.Context) {
+	var req entity.LikesRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.Service.Like(c, req.ImageId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "You successfully like"})
+}

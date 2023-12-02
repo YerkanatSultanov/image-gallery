@@ -7,6 +7,7 @@ option go_package = "pkg/protobuf/userservice/gw";
 service UserService {
   rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserByEmailResponse) {}
   rpc GetUserById(GetUserByIdRequest) returns (GetUserByIdResponse) {}
+  rpc GetUserByUsername(GetUserByUsernameRequest) returns (GetUserByUsernameResponse) {}
 }
 
 message GetUserByEmailRequest {
@@ -22,6 +23,14 @@ message GetUserByIdRequest {
 }
 
 message GetUserByIdResponse {
+  User result = 1;
+}
+
+message GetUserByUsernameRequest {
+  string username = 1;
+}
+
+message GetUserByUsernameResponse {
   User result = 1;
 }
 

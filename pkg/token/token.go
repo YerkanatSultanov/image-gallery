@@ -45,26 +45,31 @@ func ParseJWT(tokenString string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func TokenStringClaims(c *gin.Context) (string, int, error) {
+func Claims(c *gin.Context) (string, int, string, error) {
 	tokenString, err := token.ExtractTokenFromHeader(c)
 	if err != nil {
-		return "", 0, fmt.Errorf("failed to extract token:", err)
+		return "", 0, "", fmt.Errorf("failed to extract token:", err)
 	}
 
 	claims, err := token.ParseJWT(tokenString)
 	if err != nil {
-		return "", 0, fmt.Errorf("failed to parse JWT:", err)
+		return "", 0, "", fmt.Errorf("failed to parse JWT:", err)
 	}
 
 	userID, ok := claims["id"].(string)
 	if !ok {
-		return "", 0, fmt.Errorf("failed to extract user ID from JWT claims")
+		return "", 0, "", fmt.Errorf("failed to extract user ID from JWT claims")
+	}
+
+	username, ok := claims["username"].(string)
+	if !ok {
+		return "", 0, "", fmt.Errorf("failed to extract user username from JWT claims")
 	}
 
 	id, err := strconv.Atoi(userID)
 	if err != nil {
-		return "", 0, fmt.Errorf("can not convert string to int: %s", err)
+		return "", 0, "", fmt.Errorf("can not convert string to int: %s", err)
 	}
 
-	return tokenString, id, nil
+	return tokenString, id, username, nil
 }
