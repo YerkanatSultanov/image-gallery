@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"image-gallery/internal/auth/service/token"
 	"strconv"
 	"strings"
 )
@@ -46,12 +45,12 @@ func ParseJWT(tokenString string) (jwt.MapClaims, error) {
 }
 
 func Claims(c *gin.Context) (string, int, string, error) {
-	tokenString, err := token.ExtractTokenFromHeader(c)
+	tokenString, err := ExtractTokenFromHeader(c)
 	if err != nil {
 		return "", 0, "", fmt.Errorf("failed to extract token:", err)
 	}
 
-	claims, err := token.ParseJWT(tokenString)
+	claims, err := ParseJWT(tokenString)
 	if err != nil {
 		return "", 0, "", fmt.Errorf("failed to parse JWT:", err)
 	}

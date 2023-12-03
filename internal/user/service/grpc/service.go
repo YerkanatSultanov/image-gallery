@@ -102,11 +102,12 @@ func (s *Service) GetUserByEmail(ctx context.Context, req *pb.GetUserByEmailRequ
 
 	return &pb.GetUserByEmailResponse{
 		Result: &pb.User{
-			Id:       int32(u.Id),
-			Email:    u.Email,
-			Username: u.Username,
-			Password: u.Password,
-			Role:     u.Role,
+			Id:          int32(u.Id),
+			Email:       u.Email,
+			Username:    u.Username,
+			Password:    u.Password,
+			Role:        u.Role,
+			IsConfirmed: u.IsConfirmed,
 		},
 	}, nil
 }
