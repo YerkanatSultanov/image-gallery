@@ -2,23 +2,28 @@ package grpc
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"image-gallery/internal/kafka"
+	"image-gallery/internal/user/controller/consumer/dto"
 	"image-gallery/internal/user/entity"
 	"image-gallery/internal/user/repo"
 	pb "image-gallery/pkg/protobuf/userservice/gw"
 	"image-gallery/pkg/token"
 	"image-gallery/pkg/util"
+	"math/rand"
 	"strconv"
 	"time"
 )
 
 type Service struct {
 	pb.UnimplementedUserServiceServer
-	logger  *zap.SugaredLogger
-	repo    repo.Repository
-	timeout time.Duration
+	logger                   *zap.SugaredLogger
+	repo                     repo.Repository
+	timeout                  time.Duration
+	userVerificationProducer *kafka.Producer
 }
 
 //type ServiceInt interface {
@@ -28,13 +33,13 @@ type Service struct {
 //	GetUserByEmail(c context.Context, req *pb.GetUserByEmailRequest) (*pb.GetUserByEmailResponse, error)
 //}
 
-func NewService(repository *repo.Repository, logger *zap.SugaredLogger) *Service {
+func NewService(repository *repo.Repository, logger *zap.SugaredLogger, userVerificationProducer *kafka.Producer) *Service {
 	return &Service{
-		repo:   *repository,
-		logger: logger,
+		repo:                     *repository,
+		logger:                   logger,
+		userVerificationProducer: userVerificationProducer,
 	}
 }
-
 func (s *Service) CreateUser(req *entity.CreateUserReq) (*entity.CreateUserRes, error) {
 	hashedPassword, err := util.HashPassword(req.Password)
 	if err != nil {
@@ -47,13 +52,43 @@ func (s *Service) CreateUser(req *entity.CreateUserReq) (*entity.CreateUserRes, 
 		Password: hashedPassword,
 	}
 
+	randNum1 := rand.Intn(10)
+	randNum2 := rand.Intn(10)
+	randNum3 := rand.Intn(10)
+	randNum4 := rand.Intn(10)
+
+	msg := dto.UserCode{Code: fmt.Sprintf("%d%d%d%d", randNum1, randNum2, randNum3, randNum4)}
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert UserCode to int: %w", err)
+	}
+
+	code := &entity.UserCode{
+		UserCode: msg.Code,
+	}
+
 	r, err := s.repo.CreateUser(u)
 	if err != nil {
-		s.logger.Errorf("Can not Create user: %s", err)
+		s.logger.Errorf("Cannot create user: %s", err)
 		return nil, err
 	}
+
+	code.UserId = int(r.Id)
+
+	err = s.repo.UserCodeInsert(code)
+	if err != nil {
+		s.logger.Errorf("Cannot insert user code: %s", err)
+		return nil, err
+	}
+
+	b, err := json.Marshal(&msg)
+	if err != nil {
+		s.logger.Errorf("Failed to marshal UserCode: %s", err)
+		return nil, err
+	}
+	s.userVerificationProducer.ProduceMessage(b)
+
 	res := &entity.CreateUserRes{
-		Id:       strconv.Itoa(int(r.Id)),
+		Id:       strconv.FormatInt(r.Id, 10),
 		Username: r.Username,
 		Email:    r.Email,
 	}
@@ -232,4 +267,8 @@ func (s *Service) CreateUserAdmin(req *entity.CreateUserReq, c *gin.Context) (*e
 	}
 
 	return res, nil
+}
+
+func (s *Service) ConfirmUser(userCode string) error {
+	return s.repo.ConfirmUser(userCode)
 }

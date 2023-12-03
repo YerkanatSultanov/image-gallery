@@ -100,7 +100,7 @@ func (s *Service) LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
 	user, err := s.repository.CreateUserToken(userToken)
 	if err != nil {
 		s.logger.Errorf("failed to create user newToken: %s", err)
-		return nil, err
+
 	}
 
 	return &entity.UserTokenResponse{Id: user.Id, UserId: int(u.Id), Username: u.Username, Token: tokenString, RefreshToken: refreshTokenString}, nil

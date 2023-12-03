@@ -196,3 +196,37 @@ func (r *Repository) UserHasImage(imageID int) (bool, error) {
 	}
 	return count > 0, nil
 }
+
+func (r *Repository) FindImagesByTag(tag string) ([]entity.Image, error) {
+	c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	query := `
+        SELECT i.id, i.user_id, i.description, i.image_link, i.created_at, i.updated_at
+        FROM image i
+        JOIN tag_images ti ON i.id = ti.image_id
+        JOIN tags t ON ti.tag_id = t.tag_id
+        WHERE t.tag_name LIKE $1
+    `
+
+	rows, err := r.db.QueryContext(c, query, tag+"%")
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var images []entity.Image
+	for rows.Next() {
+		var img entity.Image
+		if err := rows.Scan(&img.Id, &img.UserId, &img.Description, &img.ImageLink, &img.CreatedAt, &img.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("scan failed: %w", err)
+		}
+		images = append(images, img)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration failed: %w", err)
+	}
+
+	return images, nil
+}

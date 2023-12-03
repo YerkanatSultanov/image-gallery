@@ -32,7 +32,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, gin.H{"message": "You have done! Now Verify your account", "Your profile": res})
 }
 
 func (h *Handler) GetUser(c *gin.Context) {
@@ -130,4 +130,20 @@ func (h *Handler) CreateUserAdmin(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (h *Handler) ConfirmUser(c *gin.Context) {
+	var req entity.ConfirmUserReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.Service.ConfirmUser(req.UserCode)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "You confirmed"})
 }

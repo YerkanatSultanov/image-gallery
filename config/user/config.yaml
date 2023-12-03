@@ -11,3 +11,12 @@ Database:
   user: postgres
   password: postgres
   sslMode: disable
+Kafka:
+  Brokers:
+    - 127.0.0.1:19092
+  Producer:
+    topic: "user-verification"
+  Consumer:
+    topics:
+      - "user-verification"
+

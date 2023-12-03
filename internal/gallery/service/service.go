@@ -28,6 +28,7 @@ type Service interface {
 	DeleteImage(imageId int, c *gin.Context) error
 	Follows(followeeUsername string, c *gin.Context) error
 	Like(c *gin.Context, imageId int) error
+	SearchPhotosByTag(tagString string, c *gin.Context) ([]*entity.Image, error)
 }
 
 func NewService(repository repo.Repository, logger *zap.SugaredLogger, authGrpc *transport.AuthGrpcTransport, userGrpc *transport.UserGrpc) Service {
@@ -229,5 +230,36 @@ func (s *service) Like(c *gin.Context, imageId int) error {
 	}
 
 	return nil
+}
 
+func (s *service) SearchPhotosByTag(tagString string, c *gin.Context) ([]*entity.Image, error) {
+	tokenString, _, _, err := token.Claims(c)
+	if err != nil {
+		s.logger.Fatalf("Eroor in token: %s", err)
+		return nil, err
+	}
+	ok, err := s.authGrpc.IsUserAuthorized(c, tokenString)
+	if !ok.Authorized {
+		s.logger.Fatalf("You are not authorized")
+		return nil, err
+	}
+
+	photos, err := s.repository.FindImagesByTag(tagString)
+	if err != nil {
+		return nil, fmt.Errorf("error in service Search By Tag method %s", err)
+	}
+
+	photoResponse := make([]*entity.Image, len(photos))
+	for i, photo := range photos {
+		photoResponse[i] = &entity.Image{
+			Id:          photo.Id,
+			UserId:      photo.UserId,
+			Description: photo.Description,
+			ImageLink:   photo.ImageLink,
+			CreatedAt:   photo.CreatedAt,
+			UpdatedAt:   photo.UpdatedAt,
+		}
+	}
+
+	return photoResponse, nil
 }

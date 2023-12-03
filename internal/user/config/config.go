@@ -4,6 +4,7 @@ type Config struct {
 	Server     Server     `yaml:"Server"`
 	Database   Database   `yaml:"Database"`
 	GrpcServer GrpcServer `yaml:"GrpcServer"`
+	Kafka      Kafka      `yaml:"Kafka"`
 }
 
 type Server struct {
@@ -23,4 +24,18 @@ type Database struct {
 
 type GrpcServer struct {
 	Port string `yaml:"Port"`
+}
+
+type Kafka struct {
+	Brokers  []string `yaml:"brokers"`
+	Producer Producer `yaml:"producer"`
+	Consumer Consumer `yaml:"consumer"`
+}
+
+type Producer struct {
+	Topic string `yaml:"topic"`
+}
+
+type Consumer struct {
+	Topics []string `yaml:"topics"`
 }
