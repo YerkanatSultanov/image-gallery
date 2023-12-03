@@ -14,6 +14,7 @@ func InitRouters(userHandler *Handler, r *gin.Engine) {
 	group.POST("/addTag", userHandler.AddTagName)
 	group.POST("/follow", userHandler.Follow)
 	group.POST("/images", userHandler.SearchPhotosByTag)
+	group.GET("/images/sort", middleware.JWTVerify(), userHandler.GetImages)
 	group.POST("/like", middleware.JWTVerify(), userHandler.Like)
 
 	groupAdmin.GET("/all", userHandler.GetAllPhotos)

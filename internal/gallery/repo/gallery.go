@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"image-gallery/internal/gallery/entity"
+	"image-gallery/pkg/util"
 	"log"
 	"time"
 )
@@ -222,6 +223,50 @@ func (r *Repository) FindImagesByTag(tag string) ([]entity.Image, error) {
 			return nil, fmt.Errorf("scan failed: %w", err)
 		}
 		images = append(images, img)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration failed: %w", err)
+	}
+
+	return images, nil
+}
+
+func (r *Repository) GetImages(sortKey, sortBy string) ([]*entity.Image, error) {
+	c, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	validSortKeys := []string{"created_at", "updated_at", "id", "user_id"}
+	if !util.Contains(validSortKeys, sortKey) {
+		return nil, fmt.Errorf("invalid sortKey parameter")
+	}
+
+	validSortByValues := []string{"asc", "desc"}
+	if !util.Contains(validSortByValues, sortBy) {
+		return nil, fmt.Errorf("invalid sortBy parameter")
+	}
+
+	tableName := " image"
+
+	query := fmt.Sprintf(`
+		SELECT id, user_id, description, image_link, created_at, updated_at
+		FROM%s 
+		ORDER BY %s %s;
+    `, tableName, sortKey, sortBy)
+
+	rows, err := r.db.QueryContext(c, query)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var images []*entity.Image
+	for rows.Next() {
+		var img entity.Image
+		if err := rows.Scan(&img.Id, &img.UserId, &img.ImageLink, &img.Description, &img.CreatedAt, &img.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("scan failed: %w", err)
+		}
+		images = append(images, &img)
 	}
 
 	if err := rows.Err(); err != nil {
