@@ -153,3 +153,16 @@ func (h *Handler) SearchPhotosByTag(c *gin.Context) {
 
 	c.JSON(http.StatusOK, photos)
 }
+
+func (h *Handler) GetImages(c *gin.Context) {
+	sortKey := c.Query("sortKey")
+	sortBy := c.Query("sortBy")
+
+	images, err := h.Service.GetImages(sortKey, sortBy, c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"images": images})
+}

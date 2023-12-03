@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"image-gallery/internal/kafka"
 	"image-gallery/internal/user/config"
-	"image-gallery/internal/user/controller/consumer"
 	"image-gallery/internal/user/db"
 	"image-gallery/internal/user/repo"
 	"image-gallery/internal/user/service"
@@ -34,24 +32,22 @@ func (a *Applicator) Run() {
 		log.Fatalf("Error to connect database: %s", err)
 	}
 
-	fmt.Println(cfg.Kafka)
-
-	userVerificationProducer, err := kafka.NewProducer(cfg.Kafka)
-	if err != nil {
-		log.Panicf("failed NewProducer err: %v", err)
-	}
-
-	userVerificationConsumerCallback := consumer.NewUserVerificationCallback(log)
-
-	userVerificationConsumer, err := kafka.NewConsumer(log, cfg.Kafka, userVerificationConsumerCallback)
-	if err != nil {
-		log.Panicf("failed NewConsumer err: %v", err)
-	}
-
-	go userVerificationConsumer.Start()
+	//userVerificationProducer, err := kafka.NewProducer(cfg.Kafka)
+	//if err != nil {
+	//	log.Panicf("failed NewProducer err: %v", err)
+	//}
+	//
+	//userVerificationConsumerCallback := consumer.NewUserVerificationCallback(log)
+	//
+	//userVerificationConsumer, err := kafka.NewConsumer(log, cfg.Kafka, userVerificationConsumerCallback)
+	//if err != nil {
+	//	log.Panicf("failed NewConsumer err: %v", err)
+	//}
+	//
+	//go userVerificationConsumer.Start()
 
 	userRep := repo.NewRepository(database.GetDB())
-	userService := grpc.NewService(userRep, log, userVerificationProducer)
+	userService := grpc.NewService(userRep, log)
 	userHandler := service.NewHandler(userService)
 
 	grpcServer := grpc.NewServer(cfg.GrpcServer.Port, userService)

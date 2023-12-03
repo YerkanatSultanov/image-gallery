@@ -29,6 +29,7 @@ type Service interface {
 	Follows(followeeUsername string, c *gin.Context) error
 	Like(c *gin.Context, imageId int) error
 	SearchPhotosByTag(tagString string, c *gin.Context) ([]*entity.Image, error)
+	GetImages(sortKey, sortBy string, c *gin.Context) ([]*entity.Image, error)
 }
 
 func NewService(repository repo.Repository, logger *zap.SugaredLogger, authGrpc *transport.AuthGrpcTransport, userGrpc *transport.UserGrpc) Service {
@@ -262,4 +263,23 @@ func (s *service) SearchPhotosByTag(tagString string, c *gin.Context) ([]*entity
 	}
 
 	return photoResponse, nil
+}
+func (s *service) GetImages(sortKey, sortBy string, c *gin.Context) ([]*entity.Image, error) {
+	//tokenString, _, _, err := token.Claims(c)
+	//if err != nil {
+	//	s.logger.Fatalf("Eroor in token: %s", err)
+	//	return nil, err
+	//}
+	//
+	//ok, err := s.authGrpc.IsUserAuthorized(c, tokenString)
+	//if !ok.Authorized {
+	//	s.logger.Fatalf("You are not authorized")
+	//	return nil, err
+	//}
+
+	images, err := s.repository.GetImages(sortKey, sortBy)
+	if err != nil {
+		return nil, fmt.Errorf("error in service GetImages: %w", err)
+	}
+	return images, nil
 }

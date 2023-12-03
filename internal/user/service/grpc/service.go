@@ -2,28 +2,24 @@ package grpc
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"image-gallery/internal/kafka"
-	"image-gallery/internal/user/controller/consumer/dto"
 	"image-gallery/internal/user/entity"
 	"image-gallery/internal/user/repo"
 	pb "image-gallery/pkg/protobuf/userservice/gw"
 	"image-gallery/pkg/token"
 	"image-gallery/pkg/util"
-	"math/rand"
 	"strconv"
 	"time"
 )
 
 type Service struct {
 	pb.UnimplementedUserServiceServer
-	logger                   *zap.SugaredLogger
-	repo                     repo.Repository
-	timeout                  time.Duration
-	userVerificationProducer *kafka.Producer
+	logger  *zap.SugaredLogger
+	repo    repo.Repository
+	timeout time.Duration
+	//userVerificationProducer *kafka.Producer
 }
 
 //type ServiceInt interface {
@@ -33,11 +29,11 @@ type Service struct {
 //	GetUserByEmail(c context.Context, req *pb.GetUserByEmailRequest) (*pb.GetUserByEmailResponse, error)
 //}
 
-func NewService(repository *repo.Repository, logger *zap.SugaredLogger, userVerificationProducer *kafka.Producer) *Service {
+func NewService(repository *repo.Repository, logger *zap.SugaredLogger) *Service {
 	return &Service{
-		repo:                     *repository,
-		logger:                   logger,
-		userVerificationProducer: userVerificationProducer,
+		repo:   *repository,
+		logger: logger,
+		//userVerificationProducer: userVerificationProducer,
 	}
 }
 func (s *Service) CreateUser(req *entity.CreateUserReq) (*entity.CreateUserRes, error) {
@@ -52,19 +48,19 @@ func (s *Service) CreateUser(req *entity.CreateUserReq) (*entity.CreateUserRes, 
 		Password: hashedPassword,
 	}
 
-	randNum1 := rand.Intn(10)
-	randNum2 := rand.Intn(10)
-	randNum3 := rand.Intn(10)
-	randNum4 := rand.Intn(10)
+	//randNum1 := rand.Intn(10)
+	//randNum2 := rand.Intn(10)
+	//randNum3 := rand.Intn(10)
+	//randNum4 := rand.Intn(10)
 
-	msg := dto.UserCode{Code: fmt.Sprintf("%d%d%d%d", randNum1, randNum2, randNum3, randNum4)}
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert UserCode to int: %w", err)
-	}
+	//msg := dto.UserCode{Code: fmt.Sprintf("%d%d%d%d", randNum1, randNum2, randNum3, randNum4)}
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to convert UserCode to int: %w", err)
+	//}
 
-	code := &entity.UserCode{
-		UserCode: msg.Code,
-	}
+	//code := &entity.UserCode{
+	//	UserCode: msg.Code,
+	//}
 
 	r, err := s.repo.CreateUser(u)
 	if err != nil {
@@ -72,20 +68,20 @@ func (s *Service) CreateUser(req *entity.CreateUserReq) (*entity.CreateUserRes, 
 		return nil, err
 	}
 
-	code.UserId = int(r.Id)
+	//code.UserId = int(r.Id)
+	//
+	//err = s.repo.UserCodeInsert(code)
+	//if err != nil {
+	//	s.logger.Errorf("Cannot insert user code: %s", err)
+	//	return nil, err
+	//}
 
-	err = s.repo.UserCodeInsert(code)
-	if err != nil {
-		s.logger.Errorf("Cannot insert user code: %s", err)
-		return nil, err
-	}
-
-	b, err := json.Marshal(&msg)
-	if err != nil {
-		s.logger.Errorf("Failed to marshal UserCode: %s", err)
-		return nil, err
-	}
-	s.userVerificationProducer.ProduceMessage(b)
+	//b, err := json.Marshal(&msg)
+	//if err != nil {
+	//	s.logger.Errorf("Failed to marshal UserCode: %s", err)
+	//	return nil, err
+	//}
+	//s.userVerificationProducer.ProduceMessage(b)
 
 	res := &entity.CreateUserRes{
 		Id:       strconv.FormatInt(r.Id, 10),
