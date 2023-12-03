@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"image-gallery/internal/user/entity"
 	"log"
 	"time"
@@ -13,8 +14,10 @@ func (r *Repository) CreateUser(user *entity.User) (*entity.User, error) {
 	defer cancel()
 
 	var lastInsertId int
-	query := "INSERT INTO users(username, password, email) VALUES ($1, $2, $3) returning id"
+
+	query := "INSERT INTO users(username, password, email, role) VALUES ($1, $2, $3, 'client') returning id"
 	err := r.db.QueryRowContext(c, query, user.Username, user.Password, user.Email).Scan(&lastInsertId)
+
 	if err != nil {
 		return &entity.User{}, err
 	}
@@ -29,8 +32,8 @@ func (r *Repository) GetUserByEmail(email string) (*entity.User, error) {
 
 	u := entity.User{}
 
-	query := "SELECT id, email, username, password FROM users WHERE email = $1"
-	err := r.db.QueryRowContext(c, query, email).Scan(&u.Id, &u.Email, &u.Username, &u.Password)
+	query := "SELECT id, email, username, password, role FROM users WHERE email = $1"
+	err := r.db.QueryRowContext(c, query, email).Scan(&u.Id, &u.Email, &u.Username, &u.Password, &u.Role)
 	if err != nil {
 		return &entity.User{}, nil
 	}
@@ -42,9 +45,23 @@ func (r *Repository) GetUserById(id int) (*entity.User, error) {
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	u := entity.User{}
-	query := "SELECT id, email, username, password FROM users WHERE id = $1"
+	query := "SELECT id, email, username, password, role FROM users WHERE id = $1"
 
-	err := r.db.QueryRowContext(c, query, id).Scan(&u.Id, &u.Email, &u.Username, &u.Password)
+	err := r.db.QueryRowContext(c, query, id).Scan(&u.Id, &u.Email, &u.Username, &u.Password, &u.Role)
+	if err != nil {
+		return &entity.User{}, nil
+	}
+
+	return &u, nil
+}
+
+func (r *Repository) GetUserByUsername(username string) (*entity.User, error) {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	u := entity.User{}
+	query := "SELECT id, email, username, password, role FROM users WHERE username = $1"
+
+	err := r.db.QueryRowContext(c, query, username).Scan(&u.Id, &u.Email, &u.Username, &u.Password, &u.Role)
 	if err != nil {
 		return &entity.User{}, nil
 	}
@@ -86,15 +103,35 @@ func (r *Repository) GetAllUsers() ([]*entity.User, error) {
 	return users, nil
 }
 
-func (r *Repository) DeleteUserByEmail(email string) error {
+func (r *Repository) DeleteUser(id int) error {
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	query := "delete from users where email=$1"
+	query := "delete from users where id=$1"
+	queryAuth := "delete from user_token where user_id=$1"
 
-	err := r.db.QueryRowContext(c, query, email)
+	_, err := r.db.ExecContext(c, queryAuth, id)
+	if err != nil {
+		log.Fatalf("Can not delete the user Token: %s", err)
+	}
+
+	_, err = r.db.ExecContext(c, query, id)
 	if err != nil {
 		log.Fatalf("Can not delete the user: %s", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) UpdateUser(id int, newUsername string) error {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	query := "update users set username= $1 where id = $2"
+	_, err := r.db.ExecContext(c, query, newUsername, id)
+
+	if err != nil {
+		return fmt.Errorf("failed at query exec: %v", err)
 	}
 
 	return nil

@@ -7,9 +7,15 @@ import (
 
 func InitRouters(userHandler *Handler, r *gin.Engine) {
 
-	group := r.Group("/api/v1")
+	groupClient := r.Group("/api/v1/user")
+	groupAdmin := r.Group("api/v1/admin/user")
 
-	group.POST("/signup", userHandler.CreateUser)
-	group.GET("/user/:email", middleware.JWTVerify(), userHandler.GetUser)
-	group.GET("/user/all", userHandler.GetAllUsers)
+	groupClient.POST("/signup", userHandler.CreateUser)
+	groupAdmin.GET("/:email", middleware.JWTVerify(), userHandler.GetUser)
+
+	groupAdmin.POST("/", userHandler.CreateUserAdmin)
+	groupAdmin.GET("/all", userHandler.GetAllUsers)
+	groupAdmin.POST("/update/:id", userHandler.UpdateUser)
+	groupAdmin.DELETE("/delete/:id", userHandler.DeleteUser)
+
 }

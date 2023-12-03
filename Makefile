@@ -14,6 +14,11 @@ userService:
 	go run cmd//user/main.go
 authService:
 	go run cmd//auth/main.go
-galleryMigrations:
+galleryMigrationsUp:
 	migrate -path database/gallery_migrations/ -database "postgresql://postgres:postgres@localhost:5432/galleryService?sslmode=disable" -verbose up
-
+userMigrationsUp:
+	migrate -path database/user_migrations/ -database "postgresql://postgres:postgres@localhost:5432/authDatabase?sslmode=disable" -verbose up
+userMigrationsDown:
+	migrate -path database/user_migrations/ -database "postgresql://postgres:postgres@localhost:5432/authDatabase?sslmode=disable" -verbose down
+galleryMigrationsDown:
+	migrate -path database/gallery_migrations/ -database "postgresql://postgres:postgres@localhost:5432/galleryService?sslmode=disable" -verbose down

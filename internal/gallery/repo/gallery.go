@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (r *Repository) CreatePhoto(ph *entity.Photo) error {
+func (r *Repository) CreatePhoto(ph *entity.Image) error {
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -25,7 +25,7 @@ func (r *Repository) CreatePhoto(ph *entity.Photo) error {
 	return nil
 }
 
-func (r *Repository) GetAllPhotos() ([]*entity.Photo, error) {
+func (r *Repository) GetAllPhotos() ([]*entity.Image, error) {
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -42,10 +42,10 @@ func (r *Repository) GetAllPhotos() ([]*entity.Photo, error) {
 		}
 	}(rows)
 
-	var photos []*entity.Photo
+	var photos []*entity.Image
 
 	for rows.Next() {
-		var photo entity.Photo
+		var photo entity.Image
 		if err := rows.Scan(&photo.Id, &photo.UserId, &photo.Description, &photo.ImageLink, &photo.CreatedAt); err != nil {
 			return nil, err
 		}
@@ -128,4 +128,71 @@ func (r *Repository) AddTagImage(tagId, imageId int) error {
 
 func (r *Repository) BeginTransaction() (*sql.Tx, error) {
 	return r.db.Begin()
+}
+
+func (r *Repository) DeleteImage(imageId int) error {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	query := "delete from image where id = $1"
+	_, err := r.db.ExecContext(c, query, imageId)
+
+	if err != nil {
+		return fmt.Errorf("query bake failed: %v", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) Follow(followerId int, followeeId int) error {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	query := "insert into followers(follower_id, followee_id) values ($1, $2)"
+
+	_, err := r.db.ExecContext(c, query, followerId, followeeId)
+
+	if err != nil {
+		return fmt.Errorf("error in exec query: %s", err)
+	}
+
+	return nil
+
+}
+
+func (r *Repository) UserLikedPhoto(userId, imageID int) (bool, error) {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	query := "SELECT COUNT(*) FROM likes WHERE user_id = $1 and image_id = $2"
+	var count int
+	err := r.db.QueryRowContext(c, query, userId, imageID).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("Error checking if user liked photo: %s\n", err)
+	}
+	return count > 0, nil
+}
+
+func (r *Repository) LikePhoto(like *entity.Likes) error {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	query := "INSERT INTO likes (user_id, image_id, created_at) VALUES ($1, $2, NOW())"
+	_, err := r.db.ExecContext(c, query, like.UserId, like.ImageId)
+	if err != nil {
+		return fmt.Errorf("Error liking photo: %s\n", err)
+	}
+	return nil
+}
+
+func (r *Repository) UserHasImage(imageID int) (bool, error) {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	query := "SELECT COUNT(*) FROM image WHERE id = $1"
+	var count int
+	err := r.db.QueryRowContext(c, query, imageID).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("Error checking if user has image: %s\n", err)
+	}
+	return count > 0, nil
 }

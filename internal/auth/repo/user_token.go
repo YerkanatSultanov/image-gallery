@@ -9,25 +9,19 @@ import (
 	"time"
 )
 
-func (r *repository) CreateUserToken(ctx context.Context, userToken entity.UserToken) error {
-	q := `insert into user_token(token, refresh_token, user_id) values ($1, $2, $3) returning id`
-	query, args, err := sqlx.In(
-		q,
-		userToken.Token,
-		userToken.RefreshToken,
-		userToken.UserId,
-	)
+func (r *repository) CreateUserToken(userToken *entity.UserToken) (*entity.UserToken, error) {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 
+	var lastInsertId int
+	query := "INSERT INTO user_token(token, refresh_token, user_id) VALUES ($1, $2, $3) returning id"
+	err := r.db.QueryRowContext(c, query, userToken.Token, userToken.RefreshToken, userToken.UserId).Scan(&lastInsertId)
 	if err != nil {
-		return fmt.Errorf("query bake failed: %w", err)
+		return &entity.UserToken{}, err
 	}
 
-	_, err = r.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return fmt.Errorf("db exec query failed: %w", err)
-	}
-
-	return nil
+	userToken.Id = lastInsertId
+	return userToken, nil
 }
 
 func (r *repository) UpdateUserToken(userToken entity.UserToken) error {

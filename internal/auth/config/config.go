@@ -11,7 +11,7 @@ type Config struct {
 }
 
 type Auth struct {
-	secretKey string `yaml:"secretKey"`
+	SecretKey string `yaml:"secretKey"`
 }
 
 type UserGrpcTransport struct {
