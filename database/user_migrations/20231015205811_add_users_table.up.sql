@@ -1,10 +1,20 @@
 CREATE TABLE IF NOT EXISTS "users"
 (
+    "id"          serial PRIMARY KEY,
+    "username"    varchar NOT NULL,
+    "email"       varchar NOT NULL,
+    "password"    varchar NOT NULL,
+    "role"        varchar not null,
+    "is_confirmed" boolean not null
+);
+
+CREATE table if not exists "user_code"
+(
     "id"       bigserial PRIMARY KEY,
-    "username" varchar NOT NULL,
-    "email"    varchar NOT NULL,
-    "password" varchar NOT NULL,
-    "role" varchar not null
+    "user_id"  integer,
+    "user_code" varchar not null,
+
+    FOREIGN KEY ("user_id") REFERENCES users ("id")
 );
 
 

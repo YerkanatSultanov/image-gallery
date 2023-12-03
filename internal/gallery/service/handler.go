@@ -137,3 +137,19 @@ func (h *Handler) Like(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "You successfully like"})
 }
+
+func (h *Handler) SearchPhotosByTag(c *gin.Context) {
+	tag := c.Query("tag")
+	if tag == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Tag parameter is required"})
+		return
+	}
+
+	photos, err := h.Service.SearchPhotosByTag(tag, c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, photos)
+}

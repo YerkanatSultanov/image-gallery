@@ -1,5 +1,5 @@
 Auth:
-  secretKey: secret_key
+  secretKey: secretKey
 Server:
   port: 8081
   host: localhost
