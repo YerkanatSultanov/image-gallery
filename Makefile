@@ -8,12 +8,16 @@ createdb:
 
 .PHONY: postgresinit postgres createdb
 
+run-lint:
+	golangci-lint run ./...
+
 protoc:
 	protoc --go_out=. --go-grpc_out=. --go_opt=paths=source_relative ./pkg/protobuf/userservice/gw/user.proto
 userService:
 	go run cmd//user/main.go
 authService:
 	go run cmd//auth/main.go
+
 galleryMigrationsUp:
 	migrate -path database/gallery_migrations/ -database "postgresql://postgres:postgres@localhost:5432/galleryService?sslmode=disable" -verbose up
 userMigrationsUp:

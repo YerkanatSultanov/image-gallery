@@ -8,14 +8,14 @@ import (
 func InitRouters(userHandler *Handler, r *gin.Engine) {
 
 	groupClient := r.Group("/api/v1/user")
-	groupClient.POST("/signup", userHandler.CreateUser)
+	groupClient.POST("/", userHandler.CreateUser)
 	groupClient.POST("/confirm", userHandler.ConfirmUser)
 
 	groupAdmin := r.Group("api/v1/admin/user")
 	groupAdmin.GET("/:email", middleware.JWTVerify(), userHandler.GetUser)
-	groupAdmin.POST("/", userHandler.CreateUserAdmin)
-	groupAdmin.GET("/all", userHandler.GetAllUsers)
-	groupAdmin.POST("/update/:id", userHandler.UpdateUser)
-	groupAdmin.DELETE("/delete/:id", userHandler.DeleteUser)
+	groupAdmin.POST("/", middleware.JWTVerify(), userHandler.CreateUserAdmin)
+	groupAdmin.GET("/", middleware.JWTVerify(), userHandler.GetAllUsers)
+	groupAdmin.PUT("/:id", middleware.JWTVerify(), userHandler.UpdateUser)
+	groupAdmin.DELETE("/:id", middleware.JWTVerify(), userHandler.DeleteUser)
 
 }

@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"image-gallery/internal/gallery/entity"
 	"image-gallery/internal/gallery/repo"
 	"image-gallery/internal/gallery/service"
 	"image-gallery/internal/gallery/transport"
+	"image-gallery/internal/gallery/worker"
 
 	"image-gallery/internal/gallery/config"
 	"image-gallery/internal/gallery/db"
@@ -33,11 +35,18 @@ func (a *Applicator) Run() {
 		log.Fatalf("Error to connect database: %s", err)
 	}
 
+	workerCount := 3
+	tasks := make(chan entity.Image, 1)
+	result := make(chan string, 10)
+	out := make(<-chan string, 10)
+
 	repository := repo.NewRepository(database.GetDB())
+	Worker := worker.NewWorker(workerCount, tasks, result, out, *repository)
 	authGrpcTransport := transport.NewAuthGrpcTransport(cfg.Transport.AuthGrpc)
 	userGrpcTransport := transport.NewUserGrpcTransport(cfg.Transport.UserGrpc)
-	galleryService := service.NewService(*repository, log, authGrpcTransport, userGrpcTransport)
-	handler := service.NewHandler(galleryService)
+	galleryService := service.NewService(*repository, log, authGrpcTransport, userGrpcTransport, Worker)
+	galleryService.WorkerRunInService()
+	handler := service.NewHandler(galleryService, Worker)
 
 	service.InitRouters(handler, r)
 

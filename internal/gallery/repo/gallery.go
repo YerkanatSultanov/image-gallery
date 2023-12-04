@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func (r *Repository) CreatePhoto(ph *entity.Image) error {
+func (r *Repository) CreatePhoto(ph entity.Image) error {
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -39,7 +39,7 @@ func (r *Repository) GetAllPhotos() ([]*entity.Image, error) {
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
 		if err != nil {
-
+			return
 		}
 	}(rows)
 
@@ -74,7 +74,7 @@ func (r *Repository) GetGalleryById(id int) ([]*entity.PhotoResponse, error) {
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
 		if err != nil {
-
+			return
 		}
 	}(rows)
 
@@ -135,11 +135,49 @@ func (r *Repository) DeleteImage(imageId int) error {
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	query := "delete from image where id = $1"
+	err := r.DeleteTagFromImage(imageId)
+	if err != nil {
+		return fmt.Errorf("can not delete tag from image: %s", err)
+	}
+
+	err = r.DeleteLikeFromImage(imageId)
+	if err != nil {
+		return fmt.Errorf("can not delete like from image: %s", err)
+	}
+
+	query := "DELETE FROM image WHERE id = $1"
+	_, err = r.db.ExecContext(c, query, imageId)
+
+	if err != nil {
+		return fmt.Errorf("error in exec query: %s", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) DeleteTagFromImage(imageId int) error {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	query := "DELETE FROM tag_images WHERE image_id = $1"
 	_, err := r.db.ExecContext(c, query, imageId)
 
 	if err != nil {
-		return fmt.Errorf("query bake failed: %v", err)
+		return fmt.Errorf("error in exec query: %s", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) DeleteLikeFromImage(imageId int) error {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	query := "DELETE FROM likes WHERE image_id = $1"
+	_, err := r.db.ExecContext(c, query, imageId)
+
+	if err != nil {
+		return fmt.Errorf("error in exec query: %s", err)
 	}
 
 	return nil
@@ -233,7 +271,7 @@ func (r *Repository) FindImagesByTag(tag string) ([]entity.Image, error) {
 }
 
 func (r *Repository) GetImages(sortKey, sortBy string) ([]*entity.Image, error) {
-	c, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	validSortKeys := []string{"created_at", "updated_at", "id", "user_id"}
@@ -271,6 +309,39 @@ func (r *Repository) GetImages(sortKey, sortBy string) ([]*entity.Image, error) 
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("row iteration failed: %w", err)
+	}
+
+	return images, nil
+}
+
+func (r *Repository) GetImagesForFollower(userID int, followeeId int) ([]*entity.Image, error) {
+	query := `
+		SELECT i.id, i.user_id, i.description, i.image_link, i.created_at, i.updated_at
+		FROM image i
+		JOIN followers f ON i.user_id = $1
+		WHERE f.followee_id = $2
+		ORDER BY i.created_at DESC
+	`
+
+	//TODO FIX NULL IMAGES
+
+	rows, err := r.db.QueryContext(context.Background(), query, userID, followeeId)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %v", err)
+	}
+	defer rows.Close()
+
+	var images []*entity.Image
+	for rows.Next() {
+		var img entity.Image
+		if err := rows.Scan(&img.Id, &img.UserId, &img.Description, &img.ImageLink, &img.CreatedAt, &img.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("scan failed: %v", err)
+		}
+		images = append(images, &img)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration failed: %v", err)
 	}
 
 	return images, nil

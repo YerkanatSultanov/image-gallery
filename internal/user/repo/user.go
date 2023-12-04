@@ -82,7 +82,8 @@ func (r *Repository) GetAllUsers() ([]*entity.User, error) {
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
 		if err != nil {
-
+			log.Fatalf("error in rows")
+			return
 		}
 	}(rows)
 

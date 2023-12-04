@@ -7,6 +7,7 @@ import (
 	"image-gallery/internal/gallery/entity"
 	"image-gallery/internal/gallery/repo"
 	"image-gallery/internal/gallery/transport"
+	"image-gallery/internal/gallery/worker"
 	"image-gallery/pkg/token"
 	"log"
 	"time"
@@ -18,6 +19,7 @@ type service struct {
 	logger     *zap.SugaredLogger
 	authGrpc   *transport.AuthGrpcTransport
 	userGrpc   *transport.UserGrpc
+	worker     *worker.Worker
 }
 
 type Service interface {
@@ -30,22 +32,29 @@ type Service interface {
 	Like(c *gin.Context, imageId int) error
 	SearchPhotosByTag(tagString string, c *gin.Context) ([]*entity.Image, error)
 	GetImages(sortKey, sortBy string, c *gin.Context) ([]*entity.Image, error)
+	GetImagesByFollowing(userId int, c *gin.Context) ([]*entity.Image, error)
+	WorkerRunInService()
 }
 
-func NewService(repository repo.Repository, logger *zap.SugaredLogger, authGrpc *transport.AuthGrpcTransport, userGrpc *transport.UserGrpc) Service {
+func NewService(repository repo.Repository, logger *zap.SugaredLogger, authGrpc *transport.AuthGrpcTransport, userGrpc *transport.UserGrpc, worker *worker.Worker) Service {
 	return &service{
 		repository,
 		time.Duration(2) * time.Second,
 		logger,
 		authGrpc,
 		userGrpc,
+		worker,
 	}
 }
 
 func (s *service) CreatePhoto(ph *entity.ImageRequest, c *gin.Context) error {
 	tokenString, id, _, err := token.Claims(c)
 
-	photo := &entity.Image{
+	if err != nil {
+		return fmt.Errorf("ERROR IN TOKEN: %s", err)
+	}
+
+	photo := entity.Image{
 		UserId:      id,
 		Description: ph.Description,
 		ImageLink:   ph.ImageLink,
@@ -60,10 +69,8 @@ func (s *service) CreatePhoto(ph *entity.ImageRequest, c *gin.Context) error {
 	if !b.Authorized {
 		return fmt.Errorf("USER NOT AUTHORIZED")
 	}
-
-	if err := s.repository.CreatePhoto(photo); err != nil {
-		return fmt.Errorf("Error in creating photo: %s", err)
-	}
+	
+	s.worker.TaskQueue <- photo
 
 	return nil
 }
@@ -71,6 +78,9 @@ func (s *service) CreatePhoto(ph *entity.ImageRequest, c *gin.Context) error {
 func (s *service) GetAllPhotos(c *gin.Context) ([]*entity.PhotoResponse, error) {
 
 	_, id, _, err := token.Claims(c)
+	if err != nil {
+		return nil, fmt.Errorf("ERROR IN TOKEN: %s", err)
+	}
 	u, err := s.userGrpc.GetUserById(c, id)
 	if u.Role != "admin" {
 		s.logger.Fatalf("You don't have a permissions for getting gallery: %s", err)
@@ -99,6 +109,9 @@ func (s *service) GetAllPhotos(c *gin.Context) ([]*entity.PhotoResponse, error) 
 
 func (s *service) GetGalleryById(targetId int, c *gin.Context) ([]*entity.PhotoResponse, error) {
 	_, id, _, err := token.Claims(c)
+	if err != nil {
+		return nil, fmt.Errorf("ERROR IN TOKEN: %s", err)
+	}
 	u, err := s.userGrpc.GetUserById(c, id)
 	if u.Role != "admin" {
 		s.logger.Fatalf("You don't have a permissions for getting gallery: %s", err)
@@ -159,7 +172,6 @@ func (s *service) AddTag(tagName string, imageId int) error {
 }
 
 func (s *service) DeleteImage(imageId int, c *gin.Context) error {
-
 	_, id, _, err := token.Claims(c)
 
 	if err != nil {
@@ -175,7 +187,7 @@ func (s *service) DeleteImage(imageId int, c *gin.Context) error {
 	err = s.repository.DeleteImage(imageId)
 
 	if err != nil {
-		s.logger.Fatalf("Can not delete user: %s", err)
+		s.logger.Fatalf("Can not delete image: %s", err)
 	}
 
 	return nil
@@ -190,8 +202,9 @@ func (s *service) Follows(followeeUsername string, c *gin.Context) error {
 	u, err := s.userGrpc.GetUserByUsername(c, followeeUsername)
 	//TODO: Check user for authorization
 
-	if err != nil {
+	if u == nil && err != nil {
 		s.logger.Errorf("U can not to follow this user: %s", err)
+		return err
 	}
 
 	err = s.repository.Follow(id, int(u.Id))
@@ -217,6 +230,9 @@ func (s *service) Like(c *gin.Context, imageId int) error {
 		s.logger.Fatalf("error in checkin images: %s", err)
 	}
 	ok, err := s.repository.UserLikedPhoto(id, imageId)
+	if err != nil {
+		return fmt.Errorf("error in user liked photo: %s", err)
+	}
 
 	req := &entity.Likes{
 		UserId:  id,
@@ -240,6 +256,11 @@ func (s *service) SearchPhotosByTag(tagString string, c *gin.Context) ([]*entity
 		return nil, err
 	}
 	ok, err := s.authGrpc.IsUserAuthorized(c, tokenString)
+
+	if err != nil {
+		return nil, fmt.Errorf("error in authorization of user: %s", err)
+	}
+
 	if !ok.Authorized {
 		s.logger.Fatalf("You are not authorized")
 		return nil, err
@@ -265,21 +286,31 @@ func (s *service) SearchPhotosByTag(tagString string, c *gin.Context) ([]*entity
 	return photoResponse, nil
 }
 func (s *service) GetImages(sortKey, sortBy string, c *gin.Context) ([]*entity.Image, error) {
-	//tokenString, _, _, err := token.Claims(c)
-	//if err != nil {
-	//	s.logger.Fatalf("Eroor in token: %s", err)
-	//	return nil, err
-	//}
-	//
-	//ok, err := s.authGrpc.IsUserAuthorized(c, tokenString)
-	//if !ok.Authorized {
-	//	s.logger.Fatalf("You are not authorized")
-	//	return nil, err
-	//}
-
 	images, err := s.repository.GetImages(sortKey, sortBy)
 	if err != nil {
 		return nil, fmt.Errorf("error in service GetImages: %w", err)
 	}
 	return images, nil
+}
+
+func (s *service) GetImagesByFollowing(userId int, c *gin.Context) ([]*entity.Image, error) {
+	_, id, _, err := token.Claims(c)
+	if err != nil {
+		s.logger.Errorf("can not extract info about user from token: %s", err)
+		return nil, err
+	}
+	images, err := s.repository.GetImagesForFollower(id, userId)
+	if err != nil {
+		s.logger.Errorf("can not take images by followee: %s", err)
+		return nil, err
+	}
+
+	return images, nil
+}
+
+func (s *service) WorkerRunInService() {
+	for i := 0; i < s.worker.WorkerCount; i++ {
+		s.worker.Wg.Add(1)
+		go s.worker.WorkerRun(i + 1)
+	}
 }

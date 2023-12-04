@@ -49,6 +49,7 @@ func (ut *UserTransport) GetUser(ctx context.Context, email string) (*GetUserRes
 }
 
 func (ut *UserTransport) makeRequest(ctx context.Context, httpMethod string, endpoint string, timeout time.Duration) (b []byte, err error) {
+	//nolint:all
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 

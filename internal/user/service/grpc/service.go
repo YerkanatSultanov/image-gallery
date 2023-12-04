@@ -11,14 +11,13 @@ import (
 	"image-gallery/pkg/token"
 	"image-gallery/pkg/util"
 	"strconv"
-	"time"
 )
 
 type Service struct {
 	pb.UnimplementedUserServiceServer
-	logger  *zap.SugaredLogger
-	repo    repo.Repository
-	timeout time.Duration
+	logger *zap.SugaredLogger
+	repo   repo.Repository
+	//timeout time.Duration
 	//userVerificationProducer *kafka.Producer
 }
 
@@ -149,11 +148,17 @@ func (s *Service) GetAllUsers() ([]*entity.UserResponse, error) {
 func (s *Service) UpdateUser(targetUserID int, newUsername string, c *gin.Context) error {
 
 	_, adminId, _, err := token.Claims(c)
+	if err != nil {
+		return fmt.Errorf("error in token: %s", err)
+	}
 
 	admin, err := s.repo.GetUserById(adminId)
+	if err != nil {
+		return fmt.Errorf("error in getting user id: %s", err)
+	}
 
 	if admin.Role != "admin" {
-		return fmt.Errorf("You don't have a permission for updating")
+		return fmt.Errorf("you don't have a permission for updating: %s", "client")
 	}
 
 	err = s.repo.UpdateUser(targetUserID, newUsername)
@@ -171,6 +176,10 @@ func (s *Service) DeleteUser(id int, c *gin.Context) error {
 		return err
 	}
 	admin, err := s.repo.GetUserById(adminId)
+	if err != nil {
+		s.logger.Errorf("error get an admin id from db: %s", err)
+		return err
+	}
 
 	if admin.Role != "admin" {
 		return fmt.Errorf("You don't have a permission for updating")

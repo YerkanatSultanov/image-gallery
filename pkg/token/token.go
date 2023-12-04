@@ -47,12 +47,12 @@ func ParseJWT(tokenString string) (jwt.MapClaims, error) {
 func Claims(c *gin.Context) (string, int, string, error) {
 	tokenString, err := ExtractTokenFromHeader(c)
 	if err != nil {
-		return "", 0, "", fmt.Errorf("failed to extract token:", err)
+		return "", 0, "", fmt.Errorf("failed to extract token: %s", err)
 	}
 
 	claims, err := ParseJWT(tokenString)
 	if err != nil {
-		return "", 0, "", fmt.Errorf("failed to parse JWT:", err)
+		return "", 0, "", fmt.Errorf("failed to parse JWT: %s", err)
 	}
 
 	userID, ok := claims["id"].(string)
