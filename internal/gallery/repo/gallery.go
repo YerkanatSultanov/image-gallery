@@ -314,18 +314,21 @@ func (r *Repository) GetImages(sortKey, sortBy string) ([]*entity.Image, error) 
 	return images, nil
 }
 
-func (r *Repository) GetImagesForFollower(userID int, followeeId int) ([]*entity.Image, error) {
+func (r *Repository) GetImagesForFollower(followerId int, followeeId int) ([]*entity.Image, error) {
+	c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	query := `
 		SELECT i.id, i.user_id, i.description, i.image_link, i.created_at, i.updated_at
 		FROM image i
-		JOIN followers f ON i.user_id = $1
-		WHERE f.followee_id = $2
+		JOIN followers f ON i.user_id = f.followee_id
+		WHERE f.follower_id = $1 AND f.followee_id = $2
 		ORDER BY i.created_at DESC
 	`
 
-	//TODO FIX NULL IMAGES
+	fmt.Printf("Executing query: %s with followerID: %d, followeeID: %d\n", query, followerId, followeeId)
 
-	rows, err := r.db.QueryContext(context.Background(), query, userID, followeeId)
+	rows, err := r.db.QueryContext(c, query, followerId, followeeId)
 	if err != nil {
 		return nil, fmt.Errorf("query failed: %v", err)
 	}
@@ -345,4 +348,55 @@ func (r *Repository) GetImagesForFollower(userID int, followeeId int) ([]*entity
 	}
 
 	return images, nil
+}
+
+func (r *Repository) GetLikedImages(userId int) ([]*entity.Image, error) {
+	c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	query := `
+		SELECT i.id, i.user_id, i.description, i.image_link, i.created_at, i.updated_at
+		FROM image i
+		JOIN likes l ON i.id = l.image_id
+		WHERE l.user_id = $1
+	`
+
+	rows, err := r.db.QueryContext(c, query, userId)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %v", err)
+	}
+	defer rows.Close()
+
+	var images []*entity.Image
+	for rows.Next() {
+		var img entity.Image
+		if err := rows.Scan(&img.Id, &img.UserId, &img.Description, &img.ImageLink, &img.CreatedAt, &img.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("scan failed: %v", err)
+		}
+		images = append(images, &img)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration failed: %v", err)
+	}
+
+	return images, nil
+}
+
+func (r *Repository) UpdateImage(imageId, userId int, description string) (*entity.Image, error) {
+	c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	query := `UPDATE image SET description = $1 WHERE user_id = $2 AND id = $3 
+                                  RETURNING id, user_id, description, image_link, created_at, updated_at`
+
+	var updatedImage entity.Image
+	err := r.db.QueryRowContext(c, query, description, userId, imageId).
+		Scan(&updatedImage.Id, &updatedImage.UserId, &updatedImage.Description, &updatedImage.ImageLink, &updatedImage.CreatedAt, &updatedImage.UpdatedAt)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to update image: %v", err)
+	}
+
+	return &updatedImage, nil
+
 }

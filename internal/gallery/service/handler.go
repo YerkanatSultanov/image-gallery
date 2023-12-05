@@ -185,3 +185,30 @@ func (h *Handler) GetImagesByFollowee(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"images": res})
 }
+
+func (h *Handler) GetLikedImages(c *gin.Context) {
+	images, err := h.Service.GetLikedImages(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"images": images})
+}
+
+func (h *Handler) UpdateImage(c *gin.Context) {
+	var req *entity.UpdateImageRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	image, err := h.Service.UpdateImage(c, req)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"images": image})
+}

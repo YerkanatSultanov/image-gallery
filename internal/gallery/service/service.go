@@ -34,6 +34,8 @@ type Service interface {
 	GetImages(sortKey, sortBy string, c *gin.Context) ([]*entity.Image, error)
 	GetImagesByFollowing(userId int, c *gin.Context) ([]*entity.Image, error)
 	WorkerRunInService()
+	GetLikedImages(c *gin.Context) ([]*entity.Image, error)
+	UpdateImage(c *gin.Context, req *entity.UpdateImageRequest) (*entity.Image, error)
 }
 
 func NewService(repository repo.Repository, logger *zap.SugaredLogger, authGrpc *transport.AuthGrpcTransport, userGrpc *transport.UserGrpc, worker *worker.Worker) Service {
@@ -69,7 +71,7 @@ func (s *service) CreatePhoto(ph *entity.ImageRequest, c *gin.Context) error {
 	if !b.Authorized {
 		return fmt.Errorf("USER NOT AUTHORIZED")
 	}
-	
+
 	s.worker.TaskQueue <- photo
 
 	return nil
@@ -306,6 +308,36 @@ func (s *service) GetImagesByFollowing(userId int, c *gin.Context) ([]*entity.Im
 	}
 
 	return images, nil
+}
+
+func (s *service) GetLikedImages(c *gin.Context) ([]*entity.Image, error) {
+	_, id, _, err := token.Claims(c)
+	if err != nil {
+		s.logger.Errorf("can not extract info about user from token: %s", err)
+		return nil, err
+	}
+	images, err := s.repository.GetLikedImages(id)
+	if err != nil {
+		s.logger.Errorf("can not take liked images: %s", err)
+		return nil, err
+	}
+
+	return images, nil
+}
+
+func (s *service) UpdateImage(c *gin.Context, req *entity.UpdateImageRequest) (*entity.Image, error) {
+	_, id, _, err := token.Claims(c)
+	if err != nil {
+		s.logger.Errorf("can not extract info about user from token: %s", err)
+		return nil, err
+	}
+	image, err := s.repository.UpdateImage(req.ImageId, id, req.Description)
+	if err != nil {
+		s.logger.Errorf("can not update image: %s", err)
+		return nil, err
+	}
+
+	return image, nil
 }
 
 func (s *service) WorkerRunInService() {

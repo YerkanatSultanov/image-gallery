@@ -181,8 +181,8 @@ func (s *Service) RenewToken(c *gin.Context) (*entity.UserTokenResponse, error) 
 	}
 
 	return &entity.UserTokenResponse{
-		UserId:       id,
-		Username:     updatedUserToken.Username,
+		UserId: id,
+		//Username:     updatedUserToken.Username,
 		Token:        tokenString,
 		RefreshToken: refreshTokenString,
 	}, nil

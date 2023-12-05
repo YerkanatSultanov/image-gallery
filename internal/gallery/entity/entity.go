@@ -47,3 +47,8 @@ type Likes struct {
 type LikesRequest struct {
 	ImageId int `json:"image_id"`
 }
+
+type UpdateImageRequest struct {
+	ImageId     int    `json:"imageId"`
+	Description string `json:"description"`
+}
