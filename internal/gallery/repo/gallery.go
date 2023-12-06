@@ -16,7 +16,7 @@ func (r *Repository) CreatePhoto(ph entity.Image) error {
 
 	var lastInsertId int
 	query := `insert into image(user_id, description, image_link) values($1, $2, $3) returning id`
-	err := r.db.QueryRowContext(c, query, ph.UserId, ph.Description, ph.ImageLink).Scan(&lastInsertId)
+	err := r.db.QueryRowContext(c, query, ph.UserId, ph.Description, ph.Image).Scan(&lastInsertId)
 
 	if err != nil {
 		return fmt.Errorf("query bake failed: %w", err)
@@ -47,7 +47,7 @@ func (r *Repository) GetAllPhotos() ([]*entity.Image, error) {
 
 	for rows.Next() {
 		var photo entity.Image
-		if err := rows.Scan(&photo.Id, &photo.UserId, &photo.Description, &photo.ImageLink, &photo.CreatedAt); err != nil {
+		if err := rows.Scan(&photo.Id, &photo.UserId, &photo.Description, &photo.Image, &photo.CreatedAt); err != nil {
 			return nil, err
 		}
 		photos = append(photos, &photo)
@@ -257,7 +257,7 @@ func (r *Repository) FindImagesByTag(tag string) ([]entity.Image, error) {
 	var images []entity.Image
 	for rows.Next() {
 		var img entity.Image
-		if err := rows.Scan(&img.Id, &img.UserId, &img.Description, &img.ImageLink, &img.CreatedAt, &img.UpdatedAt); err != nil {
+		if err := rows.Scan(&img.Id, &img.UserId, &img.Description, &img.Image, &img.CreatedAt, &img.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan failed: %w", err)
 		}
 		images = append(images, img)
@@ -301,7 +301,7 @@ func (r *Repository) GetImages(sortKey, sortBy string) ([]*entity.Image, error) 
 	var images []*entity.Image
 	for rows.Next() {
 		var img entity.Image
-		if err := rows.Scan(&img.Id, &img.UserId, &img.ImageLink, &img.Description, &img.CreatedAt, &img.UpdatedAt); err != nil {
+		if err := rows.Scan(&img.Id, &img.UserId, &img.Image, &img.Description, &img.CreatedAt, &img.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan failed: %w", err)
 		}
 		images = append(images, &img)
@@ -337,7 +337,7 @@ func (r *Repository) GetImagesForFollower(followerId int, followeeId int) ([]*en
 	var images []*entity.Image
 	for rows.Next() {
 		var img entity.Image
-		if err := rows.Scan(&img.Id, &img.UserId, &img.Description, &img.ImageLink, &img.CreatedAt, &img.UpdatedAt); err != nil {
+		if err := rows.Scan(&img.Id, &img.UserId, &img.Description, &img.Image, &img.CreatedAt, &img.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan failed: %v", err)
 		}
 		images = append(images, &img)
@@ -369,7 +369,7 @@ func (r *Repository) GetLikedImages(userId int) ([]*entity.Image, error) {
 	var images []*entity.Image
 	for rows.Next() {
 		var img entity.Image
-		if err := rows.Scan(&img.Id, &img.UserId, &img.Description, &img.ImageLink, &img.CreatedAt, &img.UpdatedAt); err != nil {
+		if err := rows.Scan(&img.Id, &img.UserId, &img.Description, &img.Image, &img.CreatedAt, &img.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan failed: %v", err)
 		}
 		images = append(images, &img)
@@ -391,7 +391,7 @@ func (r *Repository) UpdateImage(imageId, userId int, description string) (*enti
 
 	var updatedImage entity.Image
 	err := r.db.QueryRowContext(c, query, description, userId, imageId).
-		Scan(&updatedImage.Id, &updatedImage.UserId, &updatedImage.Description, &updatedImage.ImageLink, &updatedImage.CreatedAt, &updatedImage.UpdatedAt)
+		Scan(&updatedImage.Id, &updatedImage.UserId, &updatedImage.Description, &updatedImage.Image, &updatedImage.CreatedAt, &updatedImage.UpdatedAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to update image: %v", err)

@@ -59,7 +59,7 @@ func (s *service) CreatePhoto(ph *entity.ImageRequest, c *gin.Context) error {
 	photo := entity.Image{
 		UserId:      id,
 		Description: ph.Description,
-		ImageLink:   ph.ImageLink,
+		Image:       ph.ImageLink,
 	}
 
 	b, err := s.authGrpc.IsUserAuthorized(c, tokenString)
@@ -101,7 +101,7 @@ func (s *service) GetAllPhotos(c *gin.Context) ([]*entity.PhotoResponse, error) 
 			Id:          photo.Id,
 			UserId:      photo.UserId,
 			Description: photo.Description,
-			ImageLink:   photo.ImageLink,
+			ImageLink:   photo.Image,
 			CreatedAt:   photo.CreatedAt,
 		}
 	}
@@ -279,7 +279,7 @@ func (s *service) SearchPhotosByTag(tagString string, c *gin.Context) ([]*entity
 			Id:          photo.Id,
 			UserId:      photo.UserId,
 			Description: photo.Description,
-			ImageLink:   photo.ImageLink,
+			Image:       photo.Image,
 			CreatedAt:   photo.CreatedAt,
 			UpdatedAt:   photo.UpdatedAt,
 		}

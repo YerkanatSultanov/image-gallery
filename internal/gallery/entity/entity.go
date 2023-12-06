@@ -6,7 +6,7 @@ type Image struct {
 	Id          int       `db:"id"`
 	UserId      int       `db:"userId"`
 	Description string    `db:"name"`
-	ImageLink   string    `db:"image"`
+	Image       string    `db:"image"`
 	CreatedAt   time.Time `db:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at"`
 }
