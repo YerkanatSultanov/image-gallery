@@ -21,6 +21,17 @@ func NewHandler(s Service, Worker *worker.Worker) *Handler {
 	}
 }
 
+// CreatePhoto godoc
+//
+// @Summary CreatPhoto
+// @Tags gallery
+// @Description CreatPhoto
+// @Accept json
+// @Produce json
+// @Param input body entity.ImageRequest true "ImageRequest parameters"
+// @Success 200 {object} entity.Response
+// @Failure 400 {object} entity.Response
+// @Router /api/v1/gallery/image [post]
 func (h *Handler) CreatePhoto(c *gin.Context) {
 	var photoRequest entity.ImageRequest
 

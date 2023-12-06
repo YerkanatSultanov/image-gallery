@@ -2,6 +2,8 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"image-gallery/internal/gallery/service/middleware"
 )
 
@@ -9,7 +11,7 @@ func InitRouters(userHandler *Handler, r *gin.Engine) {
 
 	group := r.Group("/api/v1/gallery")
 	groupAdmin := r.Group("/api/v1/admin/gallery")
-
+	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	group.POST("/image", middleware.JWTMiddleware(), userHandler.CreatePhoto)
 	group.POST("/addTag", middleware.JWTMiddleware(), userHandler.AddTagName)
 	group.POST("/follow", middleware.JWTMiddleware(), userHandler.Follow)

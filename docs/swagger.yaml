@@ -1,0 +1,58 @@
+definitions:
+  entity.Response:
+    properties:
+      id:
+        type: integer
+      message:
+        type: string
+    type: object
+  image-gallery_internal_gallery_entity.ImageRequest:
+    properties:
+      description:
+        type: string
+      imageLink:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Image-Gallery service
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Image-Gallery service
+  version: "1.0"
+paths:
+  /api/v1/gallery/image:
+    post:
+      consumes:
+      - application/json
+      description: CreatPhoto
+      parameters:
+      - description: ImageRequest parameters
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/image-gallery_internal_gallery_entity.ImageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/entity.Response'
+      summary: CreatPhoto
+      tags:
+      - gallery
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

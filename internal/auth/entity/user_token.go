@@ -33,3 +33,8 @@ type LogInReq struct {
 	Email    string `json:"email" db:"email"`
 	Password string `json:"password" db:"email"`
 }
+
+type Response struct {
+	Message string
+	Id      int
+}

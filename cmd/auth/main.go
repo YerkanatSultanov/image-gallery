@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+
 	logger, _ := zap.NewProduction()
 	//nolint:all
 	defer logger.Sync()
