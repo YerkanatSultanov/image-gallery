@@ -6,18 +6,18 @@ import (
 	"image-gallery/internal/gallery/config"
 )
 
-// @title						Image-Gallery service
-// @version					1.0
-// @description				Image-Gallery service
-// @termsOfService				http://swagger.io/terms/
-// @license.name				Apache 2.0
-// @license.url				http://www.apache.org/licenses/LICENSE-2.0.html
-// @host						localhost:8080
-// @securityDefinitions.apikey	BearerAuth
-// @type						apiKey
-// @name						Authorization
-// @in							header
-// @schemes					http
+//	@title						Gallery service
+//	@version					1.0
+//	@description				Gallery service
+//	@termsOfService				http://swagger.io/terms/
+//	@license.name				Apache 2.0
+//	@license.url				http://www.apache.org/licenses/LICENSE-2.0.html
+//	@host						localhost:8082
+//	@securityDefinitions.apikey	BearerAuth
+//	@type						apiKey
+//	@name						Authorization
+//	@in							header
+//	@schemes					http
 func main() {
 	logger, _ := zap.NewProduction()
 	//nolint:all

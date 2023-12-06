@@ -86,7 +86,6 @@ func (s *service) GetAllPhotos(c *gin.Context) ([]*entity.PhotoResponse, error) 
 	u, err := s.userGrpc.GetUserById(c, id)
 	if u.Role != "admin" {
 		s.logger.Fatalf("You don't have a permissions for getting gallery: %s", err)
-		return nil, err
 	}
 
 	photos, err := s.repository.GetAllPhotos()

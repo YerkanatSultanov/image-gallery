@@ -8,7 +8,7 @@ import (
 )
 
 func InitRouters(userHandler *Handler, r *gin.Engine) {
-	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	group := r.Group("/api/v1/auth")
 	group.POST("/login", userHandler.LogIn)
 	group.PUT("/renew-token", userHandler.RenewToken)

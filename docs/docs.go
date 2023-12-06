@@ -20,8 +20,221 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/admin/gallery/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "GetAllPhotos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "GetAllPhotos",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.PhotoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.PhotoResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/gallery/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "GetGalleryById",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "GetGalleryById",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "user id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.PhotoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.PhotoResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete Image",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Delete Image",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "image id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gallery/addTag": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "AddTagName",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gallery"
+                ],
+                "summary": "AddTagName",
+                "parameters": [
+                    {
+                        "description": "TageRequest parameters",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.TageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gallery/follow": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Follow",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gallery"
+                ],
+                "summary": "Follow",
+                "parameters": [
+                    {
+                        "description": "Username parameters",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Username"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/gallery/image": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "CreatPhoto",
                 "consumes": [
                     "application/json"
@@ -48,13 +261,294 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response"
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response"
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gallery/image/update": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update the details of an image",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "images"
+                ],
+                "parameters": [
+                    {
+                        "description": "Request body containing updated image details",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.UpdateImageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Image"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gallery/images": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Search photos based on the specified tag",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gallery"
+                ],
+                "summary": "search",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "popular",
+                        "description": "Tag to filter by",
+                        "name": "tag",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/image-gallery_internal_gallery_entity.Image"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gallery/images/like": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of images that the user has liked",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gallery"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/image-gallery_internal_gallery_entity.Image"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gallery/images/sort": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of images based on sorting criteria",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "images"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Key to use for sorting (e.g., name, date)",
+                        "name": "sortKey",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order (e.g., asc, desc)",
+                        "name": "sortBy",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/image-gallery_internal_gallery_entity.Image"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gallery/images/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of images based on the followee's user ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "images"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID of the followee",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/image-gallery_internal_gallery_entity.Image"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gallery/like": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Like",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gallery"
+                ],
+                "summary": "Like",
+                "parameters": [
+                    {
+                        "description": "LikeRequest parameters",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.LikesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/image-gallery_internal_gallery_entity.Response"
                         }
                     }
                 }
@@ -62,14 +556,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "entity.Response": {
+        "image-gallery_internal_gallery_entity.Image": {
             "type": "object",
             "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
-                "message": {
+                "image": {
                     "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
                 }
             }
         },
@@ -80,6 +586,72 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "imageLink": {
+                    "type": "string"
+                }
+            }
+        },
+        "image-gallery_internal_gallery_entity.LikesRequest": {
+            "type": "object",
+            "properties": {
+                "image_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "image-gallery_internal_gallery_entity.PhotoResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "imageLink": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "image-gallery_internal_gallery_entity.Response": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "image-gallery_internal_gallery_entity.TageRequest": {
+            "type": "object",
+            "properties": {
+                "ImageId": {
+                    "type": "integer"
+                },
+                "TagName": {
+                    "type": "string"
+                }
+            }
+        },
+        "image-gallery_internal_gallery_entity.UpdateImageRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "imageId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "image-gallery_internal_gallery_entity.Username": {
+            "type": "object",
+            "properties": {
+                "username": {
                     "type": "string"
                 }
             }
@@ -97,11 +669,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "localhost:8082",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Image-Gallery service",
-	Description:      "Image-Gallery service",
+	Title:            "Gallery service",
+	Description:      "Gallery service",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
