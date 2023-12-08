@@ -11,9 +11,6 @@ import (
 )
 
 func (r *Repository) CreateUser(user *entity.User) (*entity.User, error) {
-	ok, fail := metrics.DatabaseQueryTime("Sign Up")
-	defer fail()
-
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -23,11 +20,10 @@ func (r *Repository) CreateUser(user *entity.User) (*entity.User, error) {
 	err := r.db.QueryRowContext(c, query, user.Username, user.Password, user.Email).Scan(&lastInsertId)
 
 	if err != nil {
-		return &entity.User{}, err
+		return &entity.User{}, fmt.Errorf("error in query exec: %s", err)
 	}
 
 	user.Id = int64(lastInsertId)
-	ok()
 	return user, nil
 }
 

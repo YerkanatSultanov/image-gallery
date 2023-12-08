@@ -55,8 +55,8 @@ func (s *Service) CreateUser(req *entity.CreateUserReq) (*entity.CreateUserRes, 
 	//
 	r, err := s.repo.CreateUser(u)
 	if err != nil {
-		s.logger.Errorf("Cannot create user: %s", err)
-		return nil, err
+		s.logger.Errorf("Can not create user or user is exist: %s", err)
+		return nil, fmt.Errorf("can not create user or user is exist: %s", err)
 	}
 	//
 	//code.UserId = int(r.Id)
