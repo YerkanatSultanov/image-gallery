@@ -2,25 +2,37 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "image-gallery/docs"
 	"image-gallery/internal/gallery/service/middleware"
 )
 
 func InitRouters(userHandler *Handler, r *gin.Engine) {
 
+	//r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	group := r.Group("/api/v1/gallery")
+	{
+		group.Use(middleware.JWTMiddleware())
+		group.POST("/image", userHandler.CreatePhoto)
+		group.POST("/addTag", userHandler.AddTagName)
+		group.POST("/follow", userHandler.Follow)
+		group.GET("/images", userHandler.SearchPhotosByTag)
+		group.GET("/images/sort", userHandler.GetImages)
+		group.POST("/like", userHandler.Like)
+		group.GET("/images/:id", userHandler.GetImagesByFollowee)
+		group.GET("/images/like", userHandler.GetLikedImages)
+		group.PUT("/image/update", userHandler.UpdateImage)
+	}
+
 	groupAdmin := r.Group("/api/v1/admin/gallery")
+	{
+		groupAdmin.Use(middleware.JWTMiddleware())
+		groupAdmin.GET("/", userHandler.GetAllPhotos)
+		groupAdmin.GET("/:id", userHandler.GetGalleryById)
+		groupAdmin.DELETE("/:id", userHandler.DeleteImage)
+	}
 
-	group.POST("/image", middleware.JWTMiddleware(), userHandler.CreatePhoto)
-	group.POST("/addTag", middleware.JWTMiddleware(), userHandler.AddTagName)
-	group.POST("/follow", middleware.JWTMiddleware(), userHandler.Follow)
-	group.POST("/images", middleware.JWTMiddleware(), userHandler.SearchPhotosByTag)
-	group.GET("/images/sort", middleware.JWTMiddleware(), userHandler.GetImages)
-	group.POST("/like", middleware.JWTMiddleware(), userHandler.Like)
-	group.GET("/images/:id", middleware.JWTMiddleware(), userHandler.GetImagesByFollowee)
-	group.GET("/images/like", middleware.JWTMiddleware(), userHandler.GetLikedImages)
-	group.PUT("/image/update", middleware.JWTMiddleware(), userHandler.UpdateImage)
-
-	groupAdmin.GET("/", userHandler.GetAllPhotos)
-	groupAdmin.GET("/:id", userHandler.GetGalleryById)
-	groupAdmin.DELETE("/:id", userHandler.DeleteImage)
 }

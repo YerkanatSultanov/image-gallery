@@ -7,15 +7,21 @@ import (
 
 func InitRouters(userHandler *Handler, r *gin.Engine) {
 
+	//r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	groupClient := r.Group("/api/v1/user")
-	groupClient.POST("/", userHandler.CreateUser)
-	groupClient.POST("/confirm", userHandler.ConfirmUser)
+	{
+		groupClient.POST("/", userHandler.CreateUser)
+		groupClient.POST("/confirm", userHandler.ConfirmUser)
+	}
 
 	groupAdmin := r.Group("api/v1/admin/user")
-	groupAdmin.GET("/:email", middleware.JWTVerify(), userHandler.GetUser)
-	groupAdmin.POST("/", middleware.JWTVerify(), userHandler.CreateUserAdmin)
-	groupAdmin.GET("/", middleware.JWTVerify(), userHandler.GetAllUsers)
-	groupAdmin.PUT("/:id", middleware.JWTVerify(), userHandler.UpdateUser)
-	groupAdmin.DELETE("/:id", middleware.JWTVerify(), userHandler.DeleteUser)
+	{
+		groupAdmin.Use(middleware.JWTMiddleware())
+		groupAdmin.GET("/:email", userHandler.GetUser)
+		groupAdmin.POST("/", userHandler.CreateUserAdmin)
+		groupAdmin.GET("/", userHandler.GetAllUsers)
+		groupAdmin.PUT("/:id", userHandler.UpdateUser)
+		groupAdmin.DELETE("/:id", userHandler.DeleteUser)
+	}
 
 }

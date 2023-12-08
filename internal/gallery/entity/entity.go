@@ -52,3 +52,7 @@ type UpdateImageRequest struct {
 	ImageId     int    `json:"imageId"`
 	Description string `json:"description"`
 }
+
+type Response struct {
+	Message string
+}

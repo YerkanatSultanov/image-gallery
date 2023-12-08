@@ -6,19 +6,20 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"image-gallery/internal/gallery/config"
+	"image-gallery/internal/gallery/db"
 	"image-gallery/internal/gallery/entity"
 	"image-gallery/internal/gallery/repo"
 	"image-gallery/internal/gallery/service"
 	"image-gallery/internal/gallery/transport"
 	"image-gallery/internal/gallery/worker"
+	"image-gallery/pkg/cache"
 	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-
-	"image-gallery/internal/gallery/config"
-	"image-gallery/internal/gallery/db"
+	"time"
 )
 
 type Applicator struct {
@@ -47,15 +48,21 @@ func (a *Applicator) Run() {
 	workerCount := 3
 	tasks := make(chan entity.Image, 1)
 	result := make(chan string, 10)
-	out := make(<-chan string, 10)
+
+	redisClient, err := cache.NewRedisClient()
+	if err != nil {
+		log.Info("Error in redis")
+	}
+
+	userCache := cache.NewUserCache(redisClient, 10*time.Minute)
 
 	repository := repo.NewRepository(database.GetDB())
-	Worker := worker.NewWorker(workerCount, tasks, result, out, *repository)
+	Worker := worker.NewWorker(workerCount, tasks, result, *repository)
 	authGrpcTransport := transport.NewAuthGrpcTransport(cfg.Transport.AuthGrpc)
 	userGrpcTransport := transport.NewUserGrpcTransport(cfg.Transport.UserGrpc)
 	galleryService := service.NewService(*repository, log, authGrpcTransport, userGrpcTransport, Worker)
 	galleryService.WorkerRunInService()
-	handler := service.NewHandler(galleryService, Worker)
+	handler := service.NewHandler(galleryService, Worker, userCache)
 
 	service.InitRouters(handler, r)
 

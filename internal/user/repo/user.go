@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"image-gallery/internal/user/entity"
+	"image-gallery/pkg/metrics"
 	"log"
 	"time"
 )
@@ -19,7 +20,7 @@ func (r *Repository) CreateUser(user *entity.User) (*entity.User, error) {
 	err := r.db.QueryRowContext(c, query, user.Username, user.Password, user.Email).Scan(&lastInsertId)
 
 	if err != nil {
-		return &entity.User{}, err
+		return &entity.User{}, fmt.Errorf("error in query exec: %s", err)
 	}
 
 	user.Id = int64(lastInsertId)
@@ -70,6 +71,8 @@ func (r *Repository) GetUserByUsername(username string) (*entity.User, error) {
 }
 
 func (r *Repository) GetAllUsers() ([]*entity.User, error) {
+	ok, fail := metrics.DatabaseQueryTime("Sign Up")
+	defer fail()
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -101,10 +104,14 @@ func (r *Repository) GetAllUsers() ([]*entity.User, error) {
 		return nil, err
 	}
 
+	ok()
 	return users, nil
 }
 
 func (r *Repository) DeleteUser(id int) error {
+	ok, fail := metrics.DatabaseQueryTime("Sign Up")
+	defer fail()
+
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -121,6 +128,7 @@ func (r *Repository) DeleteUser(id int) error {
 		log.Fatalf("Can not delete the user: %s", err)
 	}
 
+	ok()
 	return nil
 }
 

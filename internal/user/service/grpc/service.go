@@ -24,13 +24,6 @@ type Service struct {
 	userVerificationProducer *kafka.Producer
 }
 
-type ServiceInt interface {
-	CreateUser(ctx context.Context, req *entity.CreateUserReq) (*entity.CreateUserRes, error)
-	GetUser(ctx context.Context, email string) (*entity.User, error)
-	GetAllUsers(ctx context.Context) ([]*entity.UserResponse, error)
-	GetUserByEmail(c context.Context, req *pb.GetUserByEmailRequest) (*pb.GetUserByEmailResponse, error)
-}
-
 func NewService(repository *repo.Repository, logger *zap.SugaredLogger, userVerificationProducer *kafka.Producer) *Service {
 	return &Service{
 		repo:                     *repository,
@@ -66,8 +59,8 @@ func (s *Service) CreateUser(req *entity.CreateUserReq) (*entity.CreateUserRes, 
 
 	r, err := s.repo.CreateUser(u)
 	if err != nil {
-		s.logger.Errorf("Cannot create user: %s", err)
-		return nil, err
+		s.logger.Errorf("Can not create user or user is exist: %s", err)
+		return nil, fmt.Errorf("can not create user or user is exist: %s", err)
 	}
 
 	code.UserId = int(r.Id)

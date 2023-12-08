@@ -25,8 +25,7 @@ CREATE TABLE IF NOT EXISTS tag_images
 CREATE TABLE IF NOT EXISTS followers
 (
     "follower_id"       INTEGER      NOT NULL,
-    "followee_id"       INTEGER      NOT NULL,
-    PRIMARY KEY ("follower_id", "followee_id")
+    "followee_id"       INTEGER      NOT NULL
 );
 
 CREATE TABLE if not exists likes (

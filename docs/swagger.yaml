@@ -1,0 +1,416 @@
+definitions:
+  image-gallery_internal_gallery_entity.Image:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      image:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: integer
+    type: object
+  image-gallery_internal_gallery_entity.ImageRequest:
+    properties:
+      description:
+        type: string
+      imageLink:
+        type: string
+    type: object
+  image-gallery_internal_gallery_entity.LikesRequest:
+    properties:
+      image_id:
+        type: integer
+    type: object
+  image-gallery_internal_gallery_entity.PhotoResponse:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      imageLink:
+        type: string
+      userId:
+        type: integer
+    type: object
+  image-gallery_internal_gallery_entity.Response:
+    properties:
+      message:
+        type: string
+    type: object
+  image-gallery_internal_gallery_entity.TageRequest:
+    properties:
+      ImageId:
+        type: integer
+      TagName:
+        type: string
+    type: object
+  image-gallery_internal_gallery_entity.UpdateImageRequest:
+    properties:
+      description:
+        type: string
+      imageId:
+        type: integer
+    type: object
+  image-gallery_internal_gallery_entity.Username:
+    properties:
+      username:
+        type: string
+    type: object
+host: localhost:8082
+info:
+  contact: {}
+  description: Gallery service
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Gallery service
+  version: "1.0"
+paths:
+  /api/v1/admin/gallery/:
+    get:
+      consumes:
+      - application/json
+      description: GetAllPhotos
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.PhotoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.PhotoResponse'
+      security:
+      - BearerAuth: []
+      summary: GetAllPhotos
+      tags:
+      - admin
+  /api/v1/admin/gallery/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Image
+      parameters:
+      - description: image id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete Image
+      tags:
+      - admin
+    get:
+      consumes:
+      - application/json
+      description: GetGalleryById
+      parameters:
+      - description: user id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.PhotoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.PhotoResponse'
+      security:
+      - BearerAuth: []
+      summary: GetGalleryById
+      tags:
+      - admin
+  /api/v1/gallery/addTag:
+    post:
+      consumes:
+      - application/json
+      description: AddTagName
+      parameters:
+      - description: TageRequest parameters
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/image-gallery_internal_gallery_entity.TageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+      security:
+      - BearerAuth: []
+      summary: AddTagName
+      tags:
+      - gallery
+  /api/v1/gallery/follow:
+    post:
+      consumes:
+      - application/json
+      description: Follow
+      parameters:
+      - description: Username parameters
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/image-gallery_internal_gallery_entity.Username'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+      security:
+      - BearerAuth: []
+      summary: Follow
+      tags:
+      - gallery
+  /api/v1/gallery/image:
+    post:
+      consumes:
+      - application/json
+      description: CreatPhoto
+      parameters:
+      - description: ImageRequest parameters
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/image-gallery_internal_gallery_entity.ImageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+      security:
+      - BearerAuth: []
+      summary: CreatPhoto
+      tags:
+      - gallery
+  /api/v1/gallery/image/update:
+    put:
+      consumes:
+      - application/json
+      description: Update the details of an image
+      parameters:
+      - description: Request body containing updated image details
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/image-gallery_internal_gallery_entity.UpdateImageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Image'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+      security:
+      - BearerAuth: []
+      tags:
+      - images
+  /api/v1/gallery/images:
+    get:
+      consumes:
+      - application/json
+      description: Search photos based on the specified tag
+      parameters:
+      - default: popular
+        description: Tag to filter by
+        in: query
+        name: tag
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/image-gallery_internal_gallery_entity.Image'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+      security:
+      - BearerAuth: []
+      summary: search
+      tags:
+      - gallery
+  /api/v1/gallery/images/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of images based on the followee's user ID
+      parameters:
+      - description: User ID of the followee
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/image-gallery_internal_gallery_entity.Image'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+      security:
+      - BearerAuth: []
+      tags:
+      - images
+  /api/v1/gallery/images/like:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of images that the user has liked
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/image-gallery_internal_gallery_entity.Image'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+      security:
+      - BearerAuth: []
+      tags:
+      - gallery
+  /api/v1/gallery/images/sort:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of images based on sorting criteria
+      parameters:
+      - description: Key to use for sorting (e.g., name, date)
+        in: query
+        name: sortKey
+        required: true
+        type: string
+      - description: Sort order (e.g., asc, desc)
+        in: query
+        name: sortBy
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/image-gallery_internal_gallery_entity.Image'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+      security:
+      - BearerAuth: []
+      tags:
+      - images
+  /api/v1/gallery/like:
+    post:
+      consumes:
+      - application/json
+      description: Like
+      parameters:
+      - description: LikeRequest parameters
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/image-gallery_internal_gallery_entity.LikesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/image-gallery_internal_gallery_entity.Response'
+      security:
+      - BearerAuth: []
+      summary: Like
+      tags:
+      - gallery
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

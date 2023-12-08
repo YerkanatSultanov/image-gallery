@@ -54,7 +54,6 @@ func (a *Applicator) Run() {
 	if err != nil {
 		log.Panicf("failed to start grpc-server err: %v", err)
 	}
-
 	service.InitRouters(userHandler, r)
 
 	serverPort := cfg.Server.Port
