@@ -7,7 +7,9 @@ import (
 )
 
 func main() {
+
 	logger, _ := zap.NewProduction()
+	//nolint:all
 	defer logger.Sync()
 	l := logger.Sugar()
 	l = l.With(zap.String("app", "auth-service"))

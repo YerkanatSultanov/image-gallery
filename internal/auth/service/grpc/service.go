@@ -10,9 +10,9 @@ import (
 	"image-gallery/internal/auth/config"
 	"image-gallery/internal/auth/entity"
 	"image-gallery/internal/auth/repo"
-	"image-gallery/internal/auth/service/token"
 	"image-gallery/internal/auth/transport"
 	pb "image-gallery/pkg/protobuf/authorizationservice/gw"
+	"image-gallery/pkg/token"
 	"image-gallery/pkg/util"
 	"log"
 	"strconv"
@@ -62,6 +62,10 @@ func (s *Service) LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
 		return &entity.UserTokenResponse{}, err
 	}
 
+	if !u.IsConfirmed {
+		return nil, fmt.Errorf("User  not confirmed by user code, please confirm: %s", err)
+	}
+
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, entity.MyJWTClaims{
 		Id:       strconv.Itoa(int(u.Id)),
 		Username: u.Username,
@@ -101,6 +105,13 @@ func (s *Service) LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
 	if err != nil {
 		s.logger.Errorf("failed to create user newToken: %s", err)
 
+		updatedUser, err := s.repository.UpdateUserToken(userToken)
+		if err != nil {
+			s.logger.Errorf("Failed to update user newToken: %s", err)
+			return nil, err
+		}
+
+		return &entity.UserTokenResponse{Id: updatedUser.Id, UserId: int(u.Id), Username: u.Username, Token: updatedUser.Token, RefreshToken: updatedUser.RefreshToken}, nil
 	}
 
 	return &entity.UserTokenResponse{Id: user.Id, UserId: int(u.Id), Username: u.Username, Token: tokenString, RefreshToken: refreshTokenString}, nil
@@ -171,14 +182,16 @@ func (s *Service) RenewToken(c *gin.Context) (*entity.UserTokenResponse, error) 
 		RefreshToken: refreshTokenString,
 	}
 
-	if err := s.repository.UpdateUserToken(updatedUserToken); err != nil {
+	ut, err := s.repository.UpdateUserToken(&updatedUserToken)
+
+	if err != nil {
 		s.logger.Errorf("failed to update user token: %s", err)
 		return nil, err
 	}
 
 	return &entity.UserTokenResponse{
-		UserId:       id,
-		Username:     updatedUserToken.Username,
+		UserId: ut.UserId,
+		//Username:     updatedUserToken.Username,
 		Token:        tokenString,
 		RefreshToken: refreshTokenString,
 	}, nil

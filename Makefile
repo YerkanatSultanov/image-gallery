@@ -1,24 +1,25 @@
-postgresinit:
-	docker run --name postgres16 -p 5433:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -d postgres:16-alpine
-postgres:
-	docker exec -it postgres16 bin/bash
+redis:
+	docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
 
-createdb:
-	docker exec -it postgres16 createdb --username=postgres --owner=postgres authDatabase
+run-lint:
+	golangci-lint run ./...
 
-.PHONY: postgresinit postgres createdb
-
-protoc:
+protoc-user:
 	protoc --go_out=. --go-grpc_out=. --go_opt=paths=source_relative ./pkg/protobuf/userservice/gw/user.proto
-userService:
+protoc-auth:
+	protoc --go_out=. --go-grpc_out=. --go_opt=paths=source_relative ./pkg/protobuf/authorizationservice/gw/authorization_service.proto
+user-service:
 	go run cmd//user/main.go
-authService:
+auth-service:
 	go run cmd//auth/main.go
-galleryMigrationsUp:
+gallery-service:
+	go run cmd//auth/main.go
+
+gallery-migrations-up:
 	migrate -path database/gallery_migrations/ -database "postgresql://postgres:postgres@localhost:5432/galleryService?sslmode=disable" -verbose up
-userMigrationsUp:
+user-migrations-up:
 	migrate -path database/user_migrations/ -database "postgresql://postgres:postgres@localhost:5432/authDatabase?sslmode=disable" -verbose up
-userMigrationsDown:
+user-migrations-down:
 	migrate -path database/user_migrations/ -database "postgresql://postgres:postgres@localhost:5432/authDatabase?sslmode=disable" -verbose down
-galleryMigrationsDown:
+gallery-migrations-down:
 	migrate -path database/gallery_migrations/ -database "postgresql://postgres:postgres@localhost:5432/galleryService?sslmode=disable" -verbose down

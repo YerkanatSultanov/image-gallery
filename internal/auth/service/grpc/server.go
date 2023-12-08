@@ -36,6 +36,7 @@ func (s *Server) Start() error {
 
 	pb.RegisterAuthorizationServiceServer(s.grpcServer, s.service)
 
+	//nolint:all
 	go s.grpcServer.Serve(listener)
 
 	return nil

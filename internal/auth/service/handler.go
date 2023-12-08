@@ -66,7 +66,6 @@ func (h *Handler) RenewToken(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"userId":       userTokenResponse.UserId,
-		"username":     userTokenResponse.Username,
 		"token":        userTokenResponse.Token,
 		"refreshToken": userTokenResponse.RefreshToken,
 	})

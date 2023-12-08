@@ -6,8 +6,21 @@ import (
 	"image-gallery/internal/gallery/config"
 )
 
+//	@title						Gallery service
+//	@version					1.0
+//	@description				Gallery service
+//	@termsOfService				http://swagger.io/terms/
+//	@license.name				Apache 2.0
+//	@license.url				http://www.apache.org/licenses/LICENSE-2.0.html
+//	@host						localhost:8082
+//	@securityDefinitions.apikey	BearerAuth
+//	@type						apiKey
+//	@name						Authorization
+//	@in							header
+//	@schemes					http
 func main() {
 	logger, _ := zap.NewProduction()
+	//nolint:all
 	defer logger.Sync()
 	l := logger.Sugar()
 	l = l.With(zap.String("app", "gallery-service"))
