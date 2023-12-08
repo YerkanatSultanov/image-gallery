@@ -6,6 +6,7 @@ import (
 	_ "image-gallery/docs"
 	"image-gallery/internal/gallery/entity"
 	"image-gallery/internal/gallery/worker"
+	"image-gallery/pkg/cache"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,13 +14,15 @@ import (
 
 type Handler struct {
 	Service
-	Worker *worker.Worker
+	Worker    *worker.Worker
+	userCache cache.User
 }
 
-func NewHandler(s Service, Worker *worker.Worker) *Handler {
+func NewHandler(s Service, Worker *worker.Worker, userCache cache.User) *Handler {
 	return &Handler{
-		Service: s,
-		Worker:  Worker,
+		Service:   s,
+		Worker:    Worker,
+		userCache: userCache,
 	}
 }
 
@@ -99,18 +102,30 @@ func (h *Handler) GetAllPhotos(c *gin.Context) {
 //	@Router			/api/v1/admin/gallery/{id} [get]
 func (h *Handler) GetGalleryById(c *gin.Context) {
 	userId := c.Param("id")
-	id, err := strconv.Atoi(userId)
+
+	user, err := h.userCache.Get(c, userId)
 	if err != nil {
-		log.Fatalf("Error in parsing string user id: %s", err)
+		log.Printf("can not get gallery from cache")
 	}
 
-	photos, err := h.Service.GetGalleryById(id, c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, entity.Response{Message: fmt.Sprintf("error %s", err.Error())})
-		return
-	}
+	id, _ := strconv.Atoi(userId)
 
-	c.JSON(http.StatusOK, photos)
+	if user == nil {
+		photos, err := h.Service.GetGalleryById(id, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, entity.Response{Message: fmt.Sprintf("error %s", err.Error())})
+			return
+		}
+
+		err = h.userCache.Set(c, userId, photos)
+		if err != nil {
+			log.Printf("can not set gallery to cache: %s", err)
+			return
+		}
+
+		c.JSON(http.StatusOK, photos)
+	}
+	c.JSON(http.StatusOK, user)
 }
 
 // AddTagName godoc

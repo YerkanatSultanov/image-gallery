@@ -20,13 +20,6 @@ type Service struct {
 	//userVerificationProducer *kafka.Producer
 }
 
-type ServiceInt interface {
-	CreateUser(ctx context.Context, req *entity.CreateUserReq) (*entity.CreateUserRes, error)
-	GetUser(ctx context.Context, email string) (*entity.User, error)
-	GetAllUsers(ctx context.Context) ([]*entity.UserResponse, error)
-	GetUserByEmail(c context.Context, req *pb.GetUserByEmailRequest) (*pb.GetUserByEmailResponse, error)
-}
-
 func NewService(repository *repo.Repository, logger *zap.SugaredLogger) *Service {
 	return &Service{
 		repo:   *repository,

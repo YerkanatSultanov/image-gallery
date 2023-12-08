@@ -10,22 +10,29 @@ import (
 
 func InitRouters(userHandler *Handler, r *gin.Engine) {
 
-	group := r.Group("/api/v1/gallery")
-	groupAdmin := r.Group("/api/v1/admin/gallery")
-
+	//r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	group.POST("/image", middleware.JWTMiddleware(), userHandler.CreatePhoto)
-	group.POST("/addTag", middleware.JWTMiddleware(), userHandler.AddTagName)
-	group.POST("/follow", middleware.JWTMiddleware(), userHandler.Follow)
-	group.GET("/images", middleware.JWTMiddleware(), userHandler.SearchPhotosByTag)
-	group.GET("/images/sort", middleware.JWTMiddleware(), userHandler.GetImages)
-	group.POST("/like", middleware.JWTMiddleware(), userHandler.Like)
-	group.GET("/images/:id", middleware.JWTMiddleware(), userHandler.GetImagesByFollowee)
-	group.GET("/images/like", middleware.JWTMiddleware(), userHandler.GetLikedImages)
-	group.PUT("/image/update", middleware.JWTMiddleware(), userHandler.UpdateImage)
+	group := r.Group("/api/v1/gallery")
+	{
+		group.Use(middleware.JWTMiddleware())
+		group.POST("/image", userHandler.CreatePhoto)
+		group.POST("/addTag", userHandler.AddTagName)
+		group.POST("/follow", userHandler.Follow)
+		group.GET("/images", userHandler.SearchPhotosByTag)
+		group.GET("/images/sort", userHandler.GetImages)
+		group.POST("/like", userHandler.Like)
+		group.GET("/images/:id", userHandler.GetImagesByFollowee)
+		group.GET("/images/like", userHandler.GetLikedImages)
+		group.PUT("/image/update", userHandler.UpdateImage)
+	}
 
-	groupAdmin.GET("/", userHandler.GetAllPhotos)
-	groupAdmin.GET("/:id", userHandler.GetGalleryById)
-	groupAdmin.DELETE("/:id", userHandler.DeleteImage)
+	groupAdmin := r.Group("/api/v1/admin/gallery")
+	{
+		groupAdmin.Use(middleware.JWTMiddleware())
+		groupAdmin.GET("/", userHandler.GetAllPhotos)
+		groupAdmin.GET("/:id", userHandler.GetGalleryById)
+		groupAdmin.DELETE("/:id", userHandler.DeleteImage)
+	}
+
 }

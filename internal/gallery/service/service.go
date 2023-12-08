@@ -201,7 +201,6 @@ func (s *service) Follows(followeeUsername string, c *gin.Context) error {
 	}
 
 	u, err := s.userGrpc.GetUserByUsername(c, followeeUsername)
-	//TODO: Check user for authorization
 
 	if u == nil && err != nil {
 		s.logger.Errorf("U can not to follow this user: %s", err)

@@ -19,7 +19,7 @@ type repository struct {
 
 type Repository interface {
 	CreateUserToken(userToken *entity.UserToken) (*entity.UserToken, error)
-	UpdateUserToken(userToken entity.UserToken) error
+	UpdateUserToken(userToken *entity.UserToken) (*entity.UserToken, error)
 	GetUserTokenByUserID(userId int) (*entity.UserToken, error)
 	IsTokenPresentInDatabase(tokenString string) (bool, error)
 }

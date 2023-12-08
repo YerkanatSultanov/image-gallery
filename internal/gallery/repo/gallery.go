@@ -5,12 +5,15 @@ import (
 	"database/sql"
 	"fmt"
 	"image-gallery/internal/gallery/entity"
+	"image-gallery/pkg/metrics"
 	"image-gallery/pkg/util"
 	"log"
 	"time"
 )
 
 func (r *Repository) CreatePhoto(ph entity.Image) error {
+	ok, fail := metrics.DatabaseQueryTime("Create Photo")
+	defer fail()
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -23,10 +26,13 @@ func (r *Repository) CreatePhoto(ph entity.Image) error {
 	}
 
 	ph.Id = lastInsertId
+	ok()
 	return nil
 }
 
 func (r *Repository) GetAllPhotos() ([]*entity.Image, error) {
+	ok, fail := metrics.DatabaseQueryTime("Get All Photos")
+	defer fail()
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -58,6 +64,7 @@ func (r *Repository) GetAllPhotos() ([]*entity.Image, error) {
 		return nil, err
 	}
 
+	ok()
 	return photos, nil
 }
 

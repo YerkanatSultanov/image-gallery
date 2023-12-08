@@ -4,12 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"image-gallery/internal/auth/entity"
+	"image-gallery/pkg/metrics"
 	"time"
 )
 
 func (r *repository) CreateUserToken(userToken *entity.UserToken) (*entity.UserToken, error) {
+	ok, fail := metrics.DatabaseQueryTime("Login")
+	defer fail()
+
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -21,31 +24,38 @@ func (r *repository) CreateUserToken(userToken *entity.UserToken) (*entity.UserT
 	}
 
 	userToken.Id = lastInsertId
+	ok()
 	return userToken, nil
 }
 
-func (r *repository) UpdateUserToken(userToken entity.UserToken) error {
+func (r *repository) UpdateUserToken(userToken *entity.UserToken) (*entity.UserToken, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	q := `UPDATE user_token SET token = $1, refresh_token = $2 WHERE user_id = $3;
-`
-	query, args, err := sqlx.In(
-		q,
-		userToken.Token,
-		userToken.RefreshToken,
-		userToken.UserId,
-	)
+
+	q := `
+        UPDATE user_token
+        SET token = $1, refresh_token = $2
+        WHERE user_id = $3
+        RETURNING id, token, refresh_token, user_id, created_at, updated_at;
+    `
+
+	var updatedUserToken entity.UserToken
+	err := r.db.QueryRowContext(ctx, q, userToken.Token, userToken.RefreshToken, userToken.UserId).
+		Scan(
+			&updatedUserToken.Id,
+			&updatedUserToken.Token,
+			&updatedUserToken.RefreshToken,
+			&updatedUserToken.UserId,
+			//&updatedUserToken.Username,
+			&updatedUserToken.CreatedAt,
+			&updatedUserToken.UpdatedAt,
+		)
 
 	if err != nil {
-		return fmt.Errorf("query bake failed: %w", err)
+		return nil, fmt.Errorf("query execution failed: %w", err)
 	}
 
-	_, err = r.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return fmt.Errorf("db exec query failed: %w", err)
-	}
-
-	return nil
+	return &updatedUserToken, nil
 }
 
 func (r *repository) GetUserTokenByUserID(userId int) (*entity.UserToken, error) {
