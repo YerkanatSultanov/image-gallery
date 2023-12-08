@@ -11,17 +11,15 @@ type Worker struct {
 	WorkerCount int
 	TaskQueue   chan entity.Image
 	Result      chan string
-	Out         <-chan string
 	Wg          sync.WaitGroup
 	repo        repo.Repository
 }
 
-func NewWorker(workerCount int, taskQueue chan entity.Image, result chan string, Out <-chan string, repo repo.Repository) *Worker {
+func NewWorker(workerCount int, taskQueue chan entity.Image, result chan string, repo repo.Repository) *Worker {
 	return &Worker{
 		WorkerCount: workerCount,
 		TaskQueue:   taskQueue,
 		Result:      result,
-		Out:         Out,
 		repo:        repo,
 	}
 }

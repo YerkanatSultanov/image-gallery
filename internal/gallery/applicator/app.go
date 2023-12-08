@@ -48,7 +48,6 @@ func (a *Applicator) Run() {
 	workerCount := 3
 	tasks := make(chan entity.Image, 1)
 	result := make(chan string, 10)
-	out := make(<-chan string, 10)
 
 	redisClient, err := cache.NewRedisClient()
 	if err != nil {
@@ -58,7 +57,7 @@ func (a *Applicator) Run() {
 	userCache := cache.NewUserCache(redisClient, 10*time.Minute)
 
 	repository := repo.NewRepository(database.GetDB())
-	Worker := worker.NewWorker(workerCount, tasks, result, out, *repository)
+	Worker := worker.NewWorker(workerCount, tasks, result, *repository)
 	authGrpcTransport := transport.NewAuthGrpcTransport(cfg.Transport.AuthGrpc)
 	userGrpcTransport := transport.NewUserGrpcTransport(cfg.Transport.UserGrpc)
 	galleryService := service.NewService(*repository, log, authGrpcTransport, userGrpcTransport, Worker)

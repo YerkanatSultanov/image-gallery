@@ -206,6 +206,18 @@ func (r *Repository) Follow(followerId int, followeeId int) error {
 
 }
 
+func (r *Repository) UserFollowedCheck(userId, followee int) (bool, error) {
+	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	query := "SELECT COUNT(*) FROM followers WHERE follower_id = $1 and followee_id = $2"
+	var count int
+	err := r.db.QueryRowContext(c, query, userId, followee).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("Error checking if user liked photo: %s\n", err)
+	}
+	return count > 0, nil
+}
+
 func (r *Repository) UserLikedPhoto(userId, imageID int) (bool, error) {
 	c, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()

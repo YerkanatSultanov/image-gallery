@@ -202,12 +202,29 @@ func (s *service) Follows(followeeUsername string, c *gin.Context) error {
 
 	u, err := s.userGrpc.GetUserByUsername(c, followeeUsername)
 
-	if u == nil && err != nil {
+	if u.Id == 0 {
+		s.logger.Errorf("U can not to follow this user: %s", err)
+		return fmt.Errorf("user does not exist")
+	}
+	if int(u.Id) == id {
+		s.logger.Errorf("U can not to follow this user: %s", err)
+		return fmt.Errorf("that is you")
+	}
+
+	if err != nil {
 		s.logger.Errorf("U can not to follow this user: %s", err)
 		return err
 	}
-
-	err = s.repository.Follow(id, int(u.Id))
+	ok, err := s.repository.UserFollowedCheck(id, int(u.Id))
+	if err != nil {
+		return fmt.Errorf("error in user follow: %s", err)
+	}
+	if !ok {
+		err = s.repository.Follow(id, int(u.Id))
+		if err != nil {
+			s.logger.Fatalf("Can not follow to this user: %s", err)
+		}
+	}
 
 	if err != nil {
 		s.logger.Fatalf("error to follow: %s", err)
