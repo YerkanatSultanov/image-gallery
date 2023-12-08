@@ -3,11 +3,12 @@ package entity
 import "github.com/golang-jwt/jwt/v5"
 
 type User struct {
-	Id       int64  `json:"id" db:"id"`
-	Username string `json:"username" db:"username"`
-	Email    string `json:"email" db:"email"`
-	Password string `json:"password" db:"email"`
-	Role     string `json:"role"`
+	Id          int64  `json:"id" db:"id"`
+	Username    string `json:"username" db:"username"`
+	Email       string `json:"email" db:"email"`
+	Password    string `json:"password" db:"email"`
+	Role        string `json:"role"`
+	IsConfirmed bool   `json:"isConfirmed"`
 }
 
 type Claims struct {

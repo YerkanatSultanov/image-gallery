@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"image-gallery/internal/gallery/entity"
+	"image-gallery/internal/gallery/worker"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,11 +11,13 @@ import (
 
 type Handler struct {
 	Service
+	Worker *worker.Worker
 }
 
-func NewHandler(s Service) *Handler {
+func NewHandler(s Service, Worker *worker.Worker) *Handler {
 	return &Handler{
 		Service: s,
+		Worker:  Worker,
 	}
 }
 
@@ -165,4 +168,47 @@ func (h *Handler) GetImages(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"images": images})
+}
+
+func (h *Handler) GetImagesByFollowee(c *gin.Context) {
+	userId := c.Param("id")
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		log.Fatalf("Error in parsing string user id: %s", err)
+	}
+
+	res, err := h.Service.GetImagesByFollowing(id, c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"images": res})
+}
+
+func (h *Handler) GetLikedImages(c *gin.Context) {
+	images, err := h.Service.GetLikedImages(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"images": images})
+}
+
+func (h *Handler) UpdateImage(c *gin.Context) {
+	var req *entity.UpdateImageRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	image, err := h.Service.UpdateImage(c, req)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"images": image})
 }

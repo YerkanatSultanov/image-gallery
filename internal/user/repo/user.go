@@ -32,8 +32,8 @@ func (r *Repository) GetUserByEmail(email string) (*entity.User, error) {
 
 	u := entity.User{}
 
-	query := "SELECT id, email, username, password, role FROM users WHERE email = $1"
-	err := r.db.QueryRowContext(c, query, email).Scan(&u.Id, &u.Email, &u.Username, &u.Password, &u.Role)
+	query := "SELECT id, email, username, password, role, is_confirmed FROM users WHERE email = $1"
+	err := r.db.QueryRowContext(c, query, email).Scan(&u.Id, &u.Email, &u.Username, &u.Password, &u.Role, &u.IsConfirmed)
 	if err != nil {
 		return &entity.User{}, nil
 	}
@@ -82,7 +82,8 @@ func (r *Repository) GetAllUsers() ([]*entity.User, error) {
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
 		if err != nil {
-
+			log.Fatalf("error in rows")
+			return
 		}
 	}(rows)
 

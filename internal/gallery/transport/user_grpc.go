@@ -17,6 +17,7 @@ type UserGrpc struct {
 }
 
 func NewUserGrpcTransport(config config.UserGrpcTransport) *UserGrpc {
+	//nolint:all
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
 	conn, _ := grpc.Dial(config.Host, opts...)

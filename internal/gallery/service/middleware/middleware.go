@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func JWTVerify() gin.HandlerFunc {
+func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var accessToken string
 		tokenHeader := c.Request.Header.Get("Authorization")

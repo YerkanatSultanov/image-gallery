@@ -10,9 +10,9 @@ import (
 	"image-gallery/internal/auth/config"
 	"image-gallery/internal/auth/entity"
 	"image-gallery/internal/auth/repo"
-	"image-gallery/internal/auth/service/token"
 	"image-gallery/internal/auth/transport"
 	pb "image-gallery/pkg/protobuf/authorizationservice/gw"
+	"image-gallery/pkg/token"
 	"image-gallery/pkg/util"
 	"log"
 	"strconv"
@@ -60,6 +60,10 @@ func (s *Service) LogIn(req *entity.LogInReq) (*entity.UserTokenResponse, error)
 		fmt.Println()
 		s.logger.Info("Incorrect password")
 		return &entity.UserTokenResponse{}, err
+	}
+
+	if !u.IsConfirmed {
+		return nil, fmt.Errorf("User  not confirmed by user code, please confirm: %s", err)
 	}
 
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, entity.MyJWTClaims{
@@ -177,8 +181,8 @@ func (s *Service) RenewToken(c *gin.Context) (*entity.UserTokenResponse, error) 
 	}
 
 	return &entity.UserTokenResponse{
-		UserId:       id,
-		Username:     updatedUserToken.Username,
+		UserId: id,
+		//Username:     updatedUserToken.Username,
 		Token:        tokenString,
 		RefreshToken: refreshTokenString,
 	}, nil

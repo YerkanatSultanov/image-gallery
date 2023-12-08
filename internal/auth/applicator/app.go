@@ -1,6 +1,8 @@
 package applicator
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -10,11 +12,18 @@ import (
 	"image-gallery/internal/auth/service"
 	"image-gallery/internal/auth/service/grpc"
 	"image-gallery/internal/auth/transport"
+	"net/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 )
 
 type Applicator struct {
 	logger *zap.SugaredLogger
 	config config.Config
+	server *http.Server
+	wg     sync.WaitGroup
 }
 
 func NewApplicator(logger *zap.SugaredLogger, cfg config.Config) *Applicator {
@@ -25,6 +34,7 @@ func NewApplicator(logger *zap.SugaredLogger, cfg config.Config) *Applicator {
 }
 
 func (a *Applicator) Run() {
+
 	r := gin.Default()
 	cfg := a.config
 	log := a.logger
@@ -50,8 +60,37 @@ func (a *Applicator) Run() {
 	serverPort := cfg.Server.Port
 	addr := fmt.Sprintf("0.0.0.0:%d", serverPort)
 
-	err = r.Run(addr)
+	a.server = &http.Server{
+		Addr:    addr,
+		Handler: r,
+	}
+
+	a.wg.Add(1)
+
+	go func() {
+		defer a.wg.Done()
+		err := a.server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			a.logger.Fatalf("Error in running server: %s", err)
+		}
+	}()
+
+	a.gracefulShutdown()
+
+	a.wg.Wait()
+	a.logger.Info("Server gracefully stopped")
+}
+
+func (a *Applicator) gracefulShutdown() {
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+
+	<-signalCh
+
+	a.logger.Info("Received shutdown signal. Shutting down...")
+
+	err := a.server.Shutdown(context.Background())
 	if err != nil {
-		log.Fatalf("Error in running server: %s", err)
+		a.logger.Errorf("Error during server shutdown: %s", err)
 	}
 }
